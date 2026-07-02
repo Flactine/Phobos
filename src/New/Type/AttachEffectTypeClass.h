@@ -67,6 +67,10 @@ public:
 	Valueable<ExpireWeaponCondition> ExpireWeapon_TriggerOn;
 	Valueable<bool> ExpireWeapon_CumulativeOnlyOnce;
 	Valueable<bool> ExpireWeapon_UseInvokerAsOwner;
+	ValueableVector<AnimTypeClass*> ExpireAnimation;
+	Valueable<ExpireWeaponCondition> ExpireAnimation_TriggerOn;
+	Valueable<bool> ExpireAnimation_CumulativeOnlyOnce;
+	Valueable<bool> ExpireAnimation_UseInvokerAsOwner;
 	Nullable<ColorStruct> Tint_Color;
 	Valueable<double> Tint_Intensity;
 	Valueable<AffectedHouse> Tint_VisibleToHouses;
@@ -131,6 +135,10 @@ public:
 		, ExpireWeapon_TriggerOn { ExpireWeaponCondition::Expire }
 		, ExpireWeapon_CumulativeOnlyOnce { false }
 		, ExpireWeapon_UseInvokerAsOwner { false }
+		, ExpireAnimation {}
+		, ExpireAnimation_TriggerOn { ExpireWeaponCondition::Expire }
+		, ExpireAnimation_CumulativeOnlyOnce { false }
+		, ExpireAnimation_UseInvokerAsOwner { false }
 		, Tint_Color {}
 		, Tint_Intensity { 0.0 }
 		, Tint_VisibleToHouses { AffectedHouse::All }

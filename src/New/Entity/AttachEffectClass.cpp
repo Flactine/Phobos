@@ -935,6 +935,22 @@ int AttachEffectClass::RemoveAllOfType(AttachEffectTypeClass* pType, TechnoClass
 				}
 			}
 
+			if ((!pType->ExpireAnimation.empty()) && (pType->ExpireAnimation_TriggerOn & ExpireWeaponCondition::Death) != ExpireWeaponCondition::None)
+			{
+				if (!pType->Cumulative || !pType->ExpireWeapon_CumulativeOnlyOnce || stackCount == 1)
+				{
+					if (pType->ExpireAnimation_UseInvokerAsOwner)
+					{
+						if (auto const pInvoker = attachEffect->GetInvoker())
+							AnimExt::CreateRandomAnim(pType->ExpireAnimation, pTarget->GetCoords(), pInvoker, pInvoker->GetOwningHouse(), true);
+					}
+					else
+					{
+						AnimExt::CreateRandomAnim(pType->ExpireAnimation, pTarget->GetCoords(), pTarget, pTarget->GetOwningHouse(), true);
+					}
+				}
+			}
+
 			if (pType->Cumulative && pType->CumulativeAnimations.size() > 0)
 				pTargetExt->UpdateCumulativeAttachEffects(pType, attachEffect);
 

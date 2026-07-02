@@ -127,6 +127,11 @@ void AttachEffectTypeClass::LoadFromINI(CCINIClass* pINI)
 	this->ExpireWeapon_CumulativeOnlyOnce.Read(exINI, pSection, "ExpireWeapon.CumulativeOnlyOnce");
 	this->ExpireWeapon_UseInvokerAsOwner.Read(exINI, pSection, "ExpireWeapon.UseInvokerAsOwner");
 
+	this->ExpireAnimation.Read(exINI, pSection, "ExpireAnimation");
+	this->ExpireAnimation_TriggerOn.Read(exINI, pSection, "ExpireAnimation.TriggerOn");
+	this->ExpireAnimation_CumulativeOnlyOnce.Read(exINI, pSection, "ExpireAnimation.CumulativeOnlyOnce");
+	this->ExpireAnimation_UseInvokerAsOwner.Read(exINI, pSection, "ExpireAnimation.UseInvokerAsOwner");
+
 	this->Tint_Color.Read(exINI, pSection, "Tint.Color");
 	this->Tint_Intensity.Read(exINI, pSection, "Tint.Intensity");
 	this->Tint_VisibleToHouses.Read(exINI, pSection, "Tint.VisibleToHouses");
@@ -214,6 +219,10 @@ void AttachEffectTypeClass::Serialize(T& Stm)
 		.Process(this->ExpireWeapon_TriggerOn)
 		.Process(this->ExpireWeapon_CumulativeOnlyOnce)
 		.Process(this->ExpireWeapon_UseInvokerAsOwner)
+		.Process(this->ExpireAnimation)
+		.Process(this->ExpireAnimation_TriggerOn)
+		.Process(this->ExpireAnimation_CumulativeOnlyOnce)
+		.Process(this->ExpireAnimation_UseInvokerAsOwner)
 		.Process(this->Tint_Color)
 		.Process(this->Tint_Intensity)
 		.Process(this->Tint_VisibleToHouses)

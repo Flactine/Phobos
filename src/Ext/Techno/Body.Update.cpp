@@ -1945,6 +1945,23 @@ void TechnoExt::ExtData::UpdateAttachEffects()
 				}
 			}
 
+			if ((!pType->ExpireAnimation.empty()) && ((hasExpired && (pType->ExpireAnimation_TriggerOn & ExpireWeaponCondition::Expire) != ExpireWeaponCondition::None)
+				|| (shouldDiscard && (pType->ExpireAnimation_TriggerOn & ExpireWeaponCondition::Discard) != ExpireWeaponCondition::None)))
+			{
+				if (!pType->Cumulative || !pType->ExpireAnimation_CumulativeOnlyOnce || this->GetAttachedEffectCumulativeCount(pType) < 1)
+				{
+					if (pType->ExpireAnimation_UseInvokerAsOwner)
+					{
+						if (auto const pInvoker = attachEffect->GetInvoker())
+							AnimExt::CreateRandomAnim(pType->ExpireAnimation, pThis->GetCoords(), pInvoker, pInvoker->GetOwningHouse(), true);
+					}
+					else
+					{
+						AnimExt::CreateRandomAnim(pType->ExpireAnimation, pThis->GetCoords(), pThis, pThis->GetOwningHouse(), true);
+					}
+				}
+			}
+
 			if (shouldDiscard && attachEffect->ResetIfRecreatable())
 			{
 				++it;
@@ -2009,6 +2026,22 @@ void TechnoExt::ExtData::UpdateSelfOwnedAttachEffects()
 					else
 					{
 						expireWeapons.push_back(std::make_pair(pType->ExpireWeapon, pThis));
+					}
+				}
+			}
+
+			if ((!pType->ExpireAnimation.empty()) && (pType->ExpireAnimation_TriggerOn & ExpireWeaponCondition::Expire) != ExpireWeaponCondition::None)
+			{
+				if (!pType->Cumulative || !pType->ExpireAnimation_CumulativeOnlyOnce || this->GetAttachedEffectCumulativeCount(pType) < 1)
+				{
+					if (pType->ExpireAnimation_UseInvokerAsOwner)
+					{
+						if (auto const pInvoker = attachEffect->GetInvoker())
+							AnimExt::CreateRandomAnim(pType->ExpireAnimation, pThis->GetCoords(), pInvoker, pInvoker->GetOwningHouse(), true);
+					}
+					else
+					{
+						AnimExt::CreateRandomAnim(pType->ExpireAnimation, pThis->GetCoords(), pThis, pThis->GetOwningHouse(), true);
 					}
 				}
 			}

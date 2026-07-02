@@ -6,6 +6,8 @@
 #include <Ext/WeaponType/Body.h>
 #include <Utilities/AresHelper.h>
 
+#include <Ext/Anim/Body.h>
+
 namespace ReceiveDamageTemp
 {
 	bool SkipLowDamageCheck = false;
@@ -313,6 +315,7 @@ DEFINE_HOOK(0x702050, TechnoClass_ReceiveDamage_AttachEffectExpireWeapon, 0x6)
 
 	auto const pExt = TechnoExt::ExtMap.Find(pThis);
 	std::set<AttachEffectTypeClass*> cumulativeTypes;
+	std::set<AttachEffectTypeClass*> cumulativeTypes_anim;
 	std::vector<std::pair<WeaponTypeClass*, TechnoClass*>> expireWeapons;
 
 	for (auto const& attachEffect : pExt->AttachedEffects)
@@ -334,6 +337,25 @@ DEFINE_HOOK(0x702050, TechnoClass_ReceiveDamage_AttachEffectExpireWeapon, 0x6)
 				else
 				{
 					expireWeapons.push_back(std::make_pair(pType->ExpireWeapon, pThis));
+				}
+			}
+		}
+
+		if ((!pType->ExpireAnimation.empty()) && (pType->ExpireAnimation_TriggerOn & ExpireWeaponCondition::Death) != ExpireWeaponCondition::None)
+		{
+			if (!pType->Cumulative || !pType->ExpireAnimation_CumulativeOnlyOnce || !cumulativeTypes_anim.contains(pType))
+			{
+				if (pType->Cumulative && pType->ExpireAnimation_CumulativeOnlyOnce)
+					cumulativeTypes_anim.insert(pType);
+
+				if (pType->ExpireAnimation_UseInvokerAsOwner)
+				{
+					if (auto const pInvoker = attachEffect->GetInvoker())
+						AnimExt::CreateRandomAnim(pType->ExpireAnimation, pThis->GetCoords(), pInvoker, pInvoker->GetOwningHouse(), true);
+				}
+				else
+				{
+					AnimExt::CreateRandomAnim(pType->ExpireAnimation, pThis->GetCoords(), pThis, pThis->GetOwningHouse(), true);
 				}
 			}
 		}
