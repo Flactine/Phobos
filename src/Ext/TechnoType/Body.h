@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <Utilities/Container.h>
 #include <Utilities/TemplateDef.h>
 #include <Utilities/Enum.h>
@@ -527,6 +527,10 @@ public:
 
 		Nullable<double> ProneSpeed;
 		Nullable<double> DamagedSpeed;
+
+		Promotable<int> CrushLevel;
+		Promotable<int> CrushableLevel;
+		Promotable<int> DeployedCrushableLevel;
 
 		ValueableVector<AnimTypeClass*> Promote_VeteranAnimation;
 		ValueableVector<AnimTypeClass*> Promote_EliteAnimation;
@@ -1215,6 +1219,10 @@ public:
 
 			, ProneSpeed { }
 			, DamagedSpeed { }
+
+			, CrushLevel { -1 }
+			, CrushableLevel { -1 }
+			, DeployedCrushableLevel { -1 }
 
 			, SuppressKillWeapons { false }
 			, SuppressKillWeapons_Types { }

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <Ext/TechnoType/Body.h>
 #include <Ext/Bullet/Body.h>
@@ -442,6 +442,8 @@ public:
 	static bool ConvertToType(TechnoClass* pThis, TechnoTypeClass* toType);
 	static bool CanDeployIntoBuilding(UnitClass* pThis, bool noDeploysIntoDefaultValue = false);
 	static bool IsTypeImmune(TechnoClass* pThis, TechnoClass* pSource);
+	static int GetCrushLevel(FootClass* pThis);
+	static int GetCrushableLevel(TechnoClass* pThis);
 	static int GetTintColor(TechnoClass* pThis, bool invulnerability, bool airstrike, bool berserk);
 	static int GetCustomTintColor(TechnoClass* pThis);
 	static int GetCustomTintIntensity(TechnoClass* pThis);

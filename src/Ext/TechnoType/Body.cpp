@@ -1,4 +1,4 @@
-﻿#include "Body.h"
+#include "Body.h"
 
 #include <EventClass.h>
 #include <FlyLocomotionClass.h>
@@ -74,15 +74,6 @@ int TechnoTypeExt::ExtData::SelectForceWeapon(TechnoClass* pThis, AbstractClass*
 		}
 	}
 
-	if (forceWeaponIndex == -1
-		&& (pTargetTechno || !this->ForceWeapon_InRange_TechnoOnly)
-		&& (!this->ForceWeapon_InRange.empty() || !this->ForceAAWeapon_InRange.empty()))
-	{
-		TechnoTypeExt::SelectWeaponMutex = true;
-		forceWeaponIndex = TechnoExt::ExtMap.Find(pThis)->ApplyForceWeaponInRange(pTarget);
-		TechnoTypeExt::SelectWeaponMutex = false;
-	}
-
 	if (forceWeaponIndex == -1 && pTargetType)
 	{
 		switch (pTarget->WhatAmI())
@@ -124,6 +115,15 @@ int TechnoTypeExt::ExtData::SelectForceWeapon(TechnoClass* pThis, AbstractClass*
 				break;
 			}
 		}
+	}
+
+	if (forceWeaponIndex == -1
+		&& (pTargetTechno || !this->ForceWeapon_InRange_TechnoOnly)
+		&& (!this->ForceWeapon_InRange.empty() || !this->ForceAAWeapon_InRange.empty()))
+	{
+		TechnoTypeExt::SelectWeaponMutex = true;
+		forceWeaponIndex = TechnoExt::ExtMap.Find(pThis)->ApplyForceWeaponInRange(pTarget);
+		TechnoTypeExt::SelectWeaponMutex = false;
 	}
 
 	return forceWeaponIndex;
@@ -1492,6 +1492,10 @@ void TechnoTypeExt::ExtData::LoadFromINIFile(CCINIClass* const pINI)
 	this->DamagedSpeed.Read(exINI, pSection, "DamagedSpeed");
 	this->ProneSpeed.Read(exINI, pSection, "ProneSpeed");
 
+	this->CrushLevel.Read(exINI, pSection, "CrushLevel.%s");
+	this->CrushableLevel.Read(exINI, pSection, "CrushableLevel.%s");
+	this->DeployedCrushableLevel.Read(exINI, pSection, "DeployedCrushableLevel.%s");
+
 	this->SuppressKillWeapons.Read(exINI, pSection, "SuppressKillWeapons");
 	this->SuppressKillWeapons_Types.Read(exINI, pSection, "SuppressKillWeapons.Types");
 
@@ -2459,6 +2463,10 @@ void TechnoTypeExt::ExtData::Serialize(T& Stm)
 
 		.Process(this->DamagedSpeed)
 		.Process(this->ProneSpeed)
+
+		.Process(this->CrushLevel)
+		.Process(this->CrushableLevel)
+		.Process(this->DeployedCrushableLevel)
 
 		.Process(this->SuppressKillWeapons)
 		.Process(this->SuppressKillWeapons_Types)
