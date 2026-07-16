@@ -525,6 +525,8 @@ void RulesExt::ExtData::LoadBeforeTypeData(RulesClass* pThis, CCINIClass* pINI)
 
 	this->SortCameoByName.Read(exINI, GameStrings::General, "SortCameoByName");
 
+	this->ExtendedHealthBarDrawing.Read(exINI, GameStrings::AudioVisual, "ExtendedHealthBarDrawing");
+
 	this->MergeBuildingDamage.Read(exINI, GameStrings::CombatDamage, "MergeBuildingDamage");
 
 	this->ApplyPerTargetEffectsOnDetonate.Read(exINI, GameStrings::CombatDamage, "ApplyPerTargetEffectsOnDetonate");
@@ -1045,6 +1047,7 @@ void RulesExt::ExtData::Serialize(T& Stm)
 		.Process(this->OpenTopped_AllowFiringIfAttackedByLocomotor)
 		.Process(this->OpenTransport_FireWhileMoving)
 		.Process(this->SortCameoByName)
+		.Process(this->ExtendedHealthBarDrawing)
 		.Process(this->MergeBuildingDamage)
 		.Process(this->BuildingRadioLink_SyncOwner)
 		.Process(this->ApplyPerTargetEffectsOnDetonate)
