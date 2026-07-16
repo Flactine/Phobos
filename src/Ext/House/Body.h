@@ -1,8 +1,9 @@
-﻿#pragma once
+#pragma once
 #include <HouseClass.h>
 
 #include <Utilities/Container.h>
 #include <Utilities/TemplateDef.h>
+#include <Timer.h>
 
 #include <array>
 
@@ -76,6 +77,10 @@ public:
 		struct SWExt
 		{
 			int ShotCount;
+			CDTimerClass MusicTimer;
+			bool MusicActive;
+
+			SWExt() : ShotCount(0), MusicTimer(), MusicActive(false) { }
 		};
 		std::vector<SWExt> SuperExts;
 

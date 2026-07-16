@@ -1,10 +1,11 @@
-﻿#include "Body.h"
+#include "Body.h"
 
 #include <Ext/Anim/Body.h>
 #include <Ext/SWType/Body.h>
 #include <Ext/CaptureManager/Body.h>
 #include <Misc/FlyingStrings.h>
 #include <Utilities/Helpers.Alex.h>
+#include <ThemeClass.h>
 #include <Utilities/AresFunctions.h>
 #include <Locomotion/ShiftLocomotionClass.h>
 #include <New/Entity/ShiftSchedule.h>
