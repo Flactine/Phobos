@@ -1,4 +1,4 @@
-﻿#include "Commands.h"
+#include "Commands.h"
 
 #include "ObjectInfo.h"
 #include "NextIdleHarvester.h"
@@ -89,6 +89,11 @@ DEFINE_HOOK(0x533066, CommandClassCallback_Register, 0x6)
 			MakeCommand<DistributionModeFilterCommandClass>();
 
 		MakeCommand<DistributionModeHoldDownCommandClass>();
+	}
+
+	if (Phobos::Config::DamageNumbersCommands)
+	{
+		MakeCommand<DamageDisplayCommandClass>();
 	}
 
 	if (Phobos::Config::DevelopmentCommands)
