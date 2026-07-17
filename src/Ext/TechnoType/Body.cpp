@@ -1923,6 +1923,17 @@ void TechnoTypeExt::ExtData::LoadFromINIFile(CCINIClass* const pINI)
 	// VoiceIFVRepair from Ares 0.2
 	this->VoiceIFVRepair.Read(exINI, pSection, "VoiceIFVRepair");
 	this->ParseVoiceWeaponAttacks(exINI, pSection, this->VoiceWeaponAttacks, this->VoiceEliteWeaponAttacks);
+
+	// Battle Advantage
+	this->BattleAdvantage_KillingValue.Read(exINI, pSection, "BattleAdvantage.KillingValue");
+	this->BattleAdvantage_OverwhelmingValue.Read(exINI, pSection, "BattleAdvantage.OverwhelmingValue");
+	this->BattleAdvantage_LostValue.Read(exINI, pSection, "BattleAdvantage.LostValue");
+	this->BattleAdvantage_VeteranLostMultiplier.Read(exINI, pSection, "BattleAdvantage.VeteranLostMultiplier");
+	this->BattleAdvantage_EliteLostMultiplier.Read(exINI, pSection, "BattleAdvantage.EliteLostMultiplier");
+	this->BattleAdvantage_VeteranKillingMultiplier.Read(exINI, pSection, "BattleAdvantage.VeteranKillingMultiplier");
+	this->BattleAdvantage_EliteKillingMultiplier.Read(exINI, pSection, "BattleAdvantage.EliteKillingMultiplier");
+	this->BattleAdvantage_MindControlledLostMultiplier.Read(exINI, pSection, "BattleAdvantage.MindControlledLostMultiplier");
+	this->BattleAdvantage_MindControlledKillingMultiplier.Read(exINI, pSection, "BattleAdvantage.MindControlledKillingMultiplier");
 }
 
 void TechnoTypeExt::ExtData::LoadFromINIByWhatAmI(INI_EX& exINI, const char* pSection, INI_EX& exArtINI, const char* pArtSection)
@@ -2609,6 +2620,16 @@ void TechnoTypeExt::ExtData::Serialize(T& Stm)
 		.Process(this->FlyNoWobbles)
 
 		.Process(this->LandingAnim)
+
+		.Process(this->BattleAdvantage_KillingValue)
+		.Process(this->BattleAdvantage_OverwhelmingValue)
+		.Process(this->BattleAdvantage_LostValue)
+		.Process(this->BattleAdvantage_VeteranLostMultiplier)
+		.Process(this->BattleAdvantage_EliteLostMultiplier)
+		.Process(this->BattleAdvantage_VeteranKillingMultiplier)
+		.Process(this->BattleAdvantage_EliteKillingMultiplier)
+		.Process(this->BattleAdvantage_MindControlledLostMultiplier)
+		.Process(this->BattleAdvantage_MindControlledKillingMultiplier)
 
 		.Process(this->Missile_Cruise)
 		.Process(this->Missile_TakeOffAnim)

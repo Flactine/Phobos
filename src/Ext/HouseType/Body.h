@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <HouseTypeClass.h>
 
@@ -19,9 +19,15 @@ public:
 	{
 	public:
 		EVAType EVATag;
+		Valueable<int> Music_Combat;
+		Valueable<int> Music_Losing;
+		Valueable<int> Music_Trumpet;
 
 		ExtData(HouseTypeClass* OwnerObject) : Extension<HouseTypeClass>(OwnerObject)
 			, EVATag { -2 }
+			, Music_Combat { -2 }
+			, Music_Losing { -2 }
+			, Music_Trumpet { -2 }
 		{ }
 
 		virtual ~ExtData() = default;
