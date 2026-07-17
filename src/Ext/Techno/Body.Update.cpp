@@ -1,4 +1,4 @@
-﻿// methods used in TechnoClass_AI hooks or anything similar
+// methods used in TechnoClass_AI hooks or anything similar
 #include "Body.h"
 
 #include <Kamikaze.h>
@@ -349,6 +349,32 @@ bool TechnoExt::ExtData::CheckDeathConditions(bool isInLimbo)
 				? std::any_of(vTypes.begin(), vTypes.end(), existSingleType)
 				: std::all_of(vTypes.begin(), vTypes.end(), existSingleType);
 		};
+
+	if (pTypeExt->AutoDeath_PlayerPowerStatus != PlayerPowerStatus::None)
+	{
+		const bool isLowPower = pOwner->HasLowPower();
+		const auto status = pTypeExt->AutoDeath_PlayerPowerStatus;
+		const auto isFirstFrame = (Unsorted::CurrentFrame == 0);
+
+		if ((status == PlayerPowerStatus::Normal && !isLowPower) || (status == PlayerPowerStatus::Low && isLowPower) && !isFirstFrame)
+		{
+			TechnoExt::KillSelf(pThis, howToDie, pTypeExt->AutoDeath_VanishAnimation, isInLimbo);
+			return true;
+		}
+	}
+
+	if (pTypeExt->AutoDeath_PlayerMoney_Max != -1 || pTypeExt->AutoDeath_PlayerMoney_Min != -1)
+	{
+		const int maxMoney = pTypeExt->AutoDeath_PlayerMoney_Max;
+		const int minMoney = pTypeExt->AutoDeath_PlayerMoney_Min;
+		const int currentMoney = pOwner->Available_Money();
+
+		if ((maxMoney == -1 || currentMoney <= maxMoney) && (minMoney == -1 || currentMoney >= minMoney))
+		{
+			TechnoExt::KillSelf(pThis, howToDie, pTypeExt->AutoDeath_VanishAnimation, isInLimbo);
+			return true;
+		}
+	}
 
 	// death if listed technos don't exist
 	if (!pTypeExt->AutoDeath_TechnosDontExist.empty())
