@@ -15,6 +15,11 @@ bool WarheadTypeExt::ExtData::CanTargetHouse(HouseClass* pHouse, TechnoClass* pT
 		if (!this->AffectsNeutral && pOwner->IsNeutral())
 			return false;
 
+		const bool isHarmless = (pTarget->GetCurrentMission() == Mission::Harmless);
+
+		if (!this->AffectsHarmless && isHarmless)
+			return false;
+
 		const auto affectsAllies = this->OwnerObject()->AffectsAllies;
 
 		if (this->AffectsOwner.Get(affectsAllies) && pOwner == pHouse)
@@ -434,6 +439,7 @@ void WarheadTypeExt::ExtData::LoadFromINIFile(CCINIClass* const pINI)
 	this->AffectsAbovePercent.Read(exINI, pSection, "AffectsAbovePercent");
 	this->AffectsVeterancy.Read(exINI, pSection, "AffectsVeterancy");
 	this->AffectsNeutral.Read(exINI, pSection, "AffectsNeutral");
+	this->AffectsHarmless.Read(exINI, pSection, "AffectsHarmless");
 	this->AffectsGround.Read(exINI, pSection, "AffectsGround");
 	this->AffectsAir.Read(exINI, pSection, "AffectsAir");
 	this->CellSpread_Cylinder.Read(exINI, pSection, "CellSpread.Cylinder");
@@ -751,6 +757,7 @@ void WarheadTypeExt::ExtData::Serialize(T& Stm)
 		.Process(this->AffectsAbovePercent)
 		.Process(this->AffectsVeterancy)
 		.Process(this->AffectsNeutral)
+		.Process(this->AffectsHarmless)
 		.Process(this->AffectsGround)
 		.Process(this->AffectsAir)
 		.Process(this->CellSpread_Cylinder)
