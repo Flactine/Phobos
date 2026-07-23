@@ -74,15 +74,6 @@ int TechnoTypeExt::ExtData::SelectForceWeapon(TechnoClass* pThis, AbstractClass*
 		}
 	}
 
-	if (forceWeaponIndex == -1
-		&& (pTargetTechno || !this->ForceWeapon_InRange_TechnoOnly)
-		&& (!this->ForceWeapon_InRange.empty() || !this->ForceAAWeapon_InRange.empty()))
-	{
-		TechnoTypeExt::SelectWeaponMutex = true;
-		forceWeaponIndex = TechnoExt::ExtMap.Find(pThis)->ApplyForceWeaponInRange(pTarget);
-		TechnoTypeExt::SelectWeaponMutex = false;
-	}
-
 	if (forceWeaponIndex == -1 && pTargetType)
 	{
 		switch (pTarget->WhatAmI())
@@ -124,6 +115,15 @@ int TechnoTypeExt::ExtData::SelectForceWeapon(TechnoClass* pThis, AbstractClass*
 				break;
 			}
 		}
+	}
+
+	if (forceWeaponIndex == -1
+		&& (pTargetTechno || !this->ForceWeapon_InRange_TechnoOnly)
+		&& (!this->ForceWeapon_InRange.empty() || !this->ForceAAWeapon_InRange.empty()))
+	{
+		TechnoTypeExt::SelectWeaponMutex = true;
+		forceWeaponIndex = TechnoExt::ExtMap.Find(pThis)->ApplyForceWeaponInRange(pTarget);
+		TechnoTypeExt::SelectWeaponMutex = false;
 	}
 
 	return forceWeaponIndex;
