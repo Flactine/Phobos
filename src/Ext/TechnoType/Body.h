@@ -110,6 +110,9 @@ public:
 		Valueable<bool> AutoDeath_TechnosExist_Any;
 		Valueable<bool> AutoDeath_TechnosExist_AllowLimboed;
 		Valueable<AffectedHouse> AutoDeath_TechnosExist_Houses;
+		Valueable<PlayerPowerStatus> AutoDeath_PlayerPowerStatus;
+		Valueable<int> AutoDeath_PlayerMoney_Max;
+		Valueable<int> AutoDeath_PlayerMoney_Min;
 
 		Valueable<SlaveChangeOwnerType> Slaved_OwnerWhenMasterKilled;
 		NullableIdx<VocClass> SlavesFreeSound;
@@ -870,6 +873,9 @@ public:
 			, AutoDeath_TechnosExist_Any { true }
 			, AutoDeath_TechnosExist_AllowLimboed { true }
 			, AutoDeath_TechnosExist_Houses { AffectedHouse::Owner }
+			, AutoDeath_PlayerPowerStatus { PlayerPowerStatus::None }
+			, AutoDeath_PlayerMoney_Max { -1 }
+			, AutoDeath_PlayerMoney_Min { -1 }
 
 			, Slaved_OwnerWhenMasterKilled { SlaveChangeOwnerType::Killer }
 			, SlavesFreeSound {}
