@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <Ext/Techno/Body.h>
 #include <Utilities/Container.h>
 #include <Utilities/TemplateDef.h>
@@ -234,6 +234,8 @@ public:
 		Valueable<int> ElectricAssaultLevel;
 
 		Valueable<bool> CanKill;
+
+		Valueable<bool> HiddenDamageNumbers;
 
 		Valueable<bool> SuppressWreckage;
 		Valueable<bool> ActivateWreckage;
@@ -570,6 +572,8 @@ public:
 			, DamageAreaInvoker {}
 
 			, CanKill { true }
+
+			, HiddenDamageNumbers { false }
 
 			, KillWeapon {}
 			, KillWeapon_OnFirer {}
