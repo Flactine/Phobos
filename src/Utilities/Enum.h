@@ -199,6 +199,14 @@ enum class AutoDeathBehavior
 	Sell = 2,     // buildings only
 };
 
+enum class PlayerAdvantageStatus
+{
+	Normal = 0,
+	Combat = 1,
+	Losing = 2,
+	Triumphal = 3,
+};
+
 enum class PlayerPowerStatus
 {
 	None = 0,

@@ -707,6 +707,16 @@ public:
 
 		Nullable<AnimTypeClass*> LandingAnim;
 
+		Nullable<float> BattleAdvantage_KillingValue;
+		Valueable<float> BattleAdvantage_OverwhelmingValue;
+		Nullable<float> BattleAdvantage_LostValue;
+		Nullable<float> BattleAdvantage_VeteranLostMultiplier;
+		Nullable<float> BattleAdvantage_EliteLostMultiplier;
+		Nullable<float> BattleAdvantage_VeteranKillingMultiplier;
+		Nullable<float> BattleAdvantage_EliteKillingMultiplier;
+		Nullable<float> BattleAdvantage_MindControlledLostMultiplier;
+		Nullable<float> BattleAdvantage_MindControlledKillingMultiplier;
+
 		Valueable<bool> Missile_Cruise;
 		Valueable<AnimTypeClass*> Missile_TakeOffAnim;
 		Valueable<int> Missile_TakeOffSeparation;
@@ -1374,6 +1384,16 @@ public:
 			, FlyNoWobbles {}
 
 			, LandingAnim {}
+
+			, BattleAdvantage_KillingValue {}
+			, BattleAdvantage_OverwhelmingValue { 0.0 }
+			, BattleAdvantage_LostValue {}
+			, BattleAdvantage_VeteranLostMultiplier {}
+			, BattleAdvantage_EliteLostMultiplier {}
+			, BattleAdvantage_VeteranKillingMultiplier {}
+			, BattleAdvantage_EliteKillingMultiplier {}
+			, BattleAdvantage_MindControlledLostMultiplier {}
+			, BattleAdvantage_MindControlledKillingMultiplier {}
 
 			, Missile_Cruise { false }
 			, Missile_TakeOffAnim { nullptr }
