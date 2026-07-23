@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <Utilities/Container.h>
 #include <Utilities/TemplateDef.h>
 #include <Utilities/Enum.h>
@@ -556,6 +556,11 @@ public:
 		};
 
 		std::vector<LaserTrailDataEntry> LaserTrailData;
+
+		Promotable<int> CrushLevel;
+		Promotable<int> CrushableLevel;
+		Promotable<int> DeployedCrushableLevel;
+
 		Valueable<bool> OnlyUseLandSequences;
 		Nullable<bool> SecondaryFireSequenceLandOnly;
 		Nullable<CoordStruct> PronePrimaryFireFLH;
@@ -1196,6 +1201,10 @@ public:
 			, Spawner_RecycleAnim { }
 			, Spawner_RecycleCoord { {0,0,0} }
 			, Spawner_RecycleOnTurret { false }
+
+			, CrushLevel { -1 }
+			, CrushableLevel { -1 }
+			, DeployedCrushableLevel { -1 }
 
 			, DefaultVisualCharacter { 0 }
 			, DefaultVisualCharacterToSelf { }
