@@ -467,6 +467,8 @@ public:
 
 		Valueable<bool> SortCameoByName;
 
+		Valueable<bool> ExtendedHealthBarDrawing;
+
 		Valueable<bool> BuildingRadioLink_SyncOwner;
 
 		Valueable<Leptons> ExtraRange_TargetMoving;
@@ -946,6 +948,8 @@ public:
 			, OpenTransport_FireWhileMoving { true }
 
 			, SortCameoByName { false }
+
+			, ExtendedHealthBarDrawing { false }
 
 			, MergeBuildingDamage { false }
 
