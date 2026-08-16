@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <Ext/ObjectType/Body.h>
 #include <Utilities/Container.h>
 #include <Utilities/TemplateDef.h>
@@ -497,10 +497,6 @@ public:
 	};
 
 	std::vector<LaserTrailDataEntry> LaserTrailData;
-
-	Promotable<int> CrushLevel;
-	Promotable<int> CrushableLevel;
-	Promotable<int> DeployedCrushableLevel;
 
 	Valueable<bool> IgnoredByMouse;
 	Nullable<bool> IgnoredByMouse_ToSelf;
@@ -1026,10 +1022,6 @@ public:
 		, Spawner_RecycleAnim { }
 		, Spawner_RecycleCoord { {0,0,0} }
 		, Spawner_RecycleOnTurret {}
-
-		, CrushLevel { -1 }
-		, CrushableLevel { -1 }
-		, DeployedCrushableLevel { -1 }
 
 		, DefaultVisualCharacter { 0 }
 		, DefaultVisualCharacterToSelf { }

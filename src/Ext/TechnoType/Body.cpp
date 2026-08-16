@@ -1,4 +1,4 @@
-#include <EventClass.h>
+﻿#include <EventClass.h>
 #include <FlyLocomotionClass.h>
 #include <JumpjetLocomotionClass.h>
 
@@ -1428,10 +1428,6 @@ void TechnoTypeExt::LoadFromINIFile(CCINIClass* const pINI)
 	this->Spawner_RecycleCoord.Read(exINI, pSection, "Spawner.RecycleCoord");
 	this->Spawner_RecycleOnTurret.Read(exINI, pSection, "Spawner.RecycleOnTurret");
 
-	this->CrushLevel.Read(exINI, pSection, "CrushLevel.%s");
-	this->CrushableLevel.Read(exINI, pSection, "CrushableLevel.%s");
-	this->DeployedCrushableLevel.Read(exINI, pSection, "DeployedCrushableLevel.%s");
-
 	this->IgnoredByMouse.Read(exINI, pSection, "IgnoredByMouse");
 	this->IgnoredByMouse_ToSelf.Read(exINI, pSection, "IgnoredByMouse.ToSelf");
 	this->IgnoredByMouse_ToAlly.Read(exINI, pSection, "IgnoredByMouse.ToAlly");
@@ -2229,10 +2225,6 @@ void TechnoTypeExt::Serialize(T& Stm)
 		.Process(this->Spawner_RecycleAnim)
 		.Process(this->Spawner_RecycleCoord)
 		.Process(this->Spawner_RecycleOnTurret)
-
-		.Process(this->CrushLevel)
-		.Process(this->CrushableLevel)
-		.Process(this->DeployedCrushableLevel)
 
 		.Process(this->DefaultVisualCharacter)
 		.Process(this->DefaultVisualCharacterToSelf)
