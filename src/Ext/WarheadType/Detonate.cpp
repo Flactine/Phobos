@@ -1,4 +1,4 @@
-﻿#include "Body.h"
+#include "Body.h"
 
 #include <Ext/Anim/Body.h>
 #include <Ext/SWType/Body.h>
@@ -6,6 +6,7 @@
 #include <Misc/FlyingStrings.h>
 #include <Utilities/Helpers.Alex.h>
 #include <Utilities/AresFunctions.h>
+#include <ThemeClass.h>
 #include <Locomotion/ShiftLocomotionClass.h>
 #include <New/Entity/ShiftSchedule.h>
 #include <JumpjetLocomotionClass.h>
