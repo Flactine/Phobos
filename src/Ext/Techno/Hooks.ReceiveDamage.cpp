@@ -25,6 +25,7 @@ DEFINE_HOOK(0x701900, TechnoClass_ReceiveDamage_Shield, 0x6)
 	if (!pWHExt->IsHealthInThreshold(pThis)
 	|| !pWHExt->IsVeterancyInThreshold(pThis)
 	|| (!pWHExt->AffectsNeutral && pThis->Owner->IsNeutral())
+	|| (!pWHExt->AffectsHarmless && pThis->GetCurrentMission() == Mission::Harmless)
 	|| !pWHExt->IsInvokerAllowed(pThis, args->Attacker))
 	{
 		damage = 0;
