@@ -111,6 +111,9 @@ public:
 	Valueable<bool> AutoDeath_TechnosExist_Any;
 	Nullable<bool> AutoDeath_TechnosExist_AllowLimboed;
 	Valueable<AffectedHouse> AutoDeath_TechnosExist_Houses;
+	Valueable<PlayerPowerStatus> AutoDeath_PlayerPowerStatus;
+	Valueable<int> AutoDeath_PlayerMoney_Max;
+	Valueable<int> AutoDeath_PlayerMoney_Min;
 
 	NullableIdx<VocClass> SellSound;
 	NullableIdx<VoxClass> EVA_Sold;
@@ -727,6 +730,9 @@ public:
 		, AutoDeath_TechnosExist_Any { true }
 		, AutoDeath_TechnosExist_AllowLimboed {}
 		, AutoDeath_TechnosExist_Houses { AffectedHouse::Owner }
+		, AutoDeath_PlayerPowerStatus { PlayerPowerStatus::None }
+		, AutoDeath_PlayerMoney_Max { -1 }
+		, AutoDeath_PlayerMoney_Min { -1 }
 
 		, SellSound {}
 		, EVA_Sold {}
