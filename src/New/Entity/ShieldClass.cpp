@@ -1117,6 +1117,12 @@ ArmorType ShieldClass::GetArmorType(TechnoTypeClass* pTechnoType) const
 	const auto pShieldType = this->Type;
 	const auto pTechno = this->Techno;
 
+	if (pShieldType->InheritArmor_From != nullptr)
+	{
+		auto pInherited = pShieldType->InheritArmor_From;
+		return pInherited->Armor;
+	}
+
 	if (pTechno && pShieldType->InheritArmorFromTechno)
 	{
 		if (!pTechnoType)
