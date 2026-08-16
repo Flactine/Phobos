@@ -1,4 +1,4 @@
-﻿#include "Body.h"
+#include "Body.h"
 
 #include <Ext/Techno/Body.h>
 
@@ -386,6 +386,8 @@ void WarheadTypeExt::LoadFromINIFile(CCINIClass* const pINI)
 	this->NoCellSpread_SnapDistance.Read(exINI, pSection, "NoCellSpread_SnapDistance");
 
 	this->CanKill.Read(exINI, pSection, "CanKill");
+
+	this->HiddenDamageNumbers.Read(exINI, pSection, "HiddenDamageNumbers");
 
 	this->KillWeapon.Read(exINI, pSection, "KillWeapon");
 	this->KillWeapon_OnFirer.Read(exINI, pSection, "KillWeapon.OnFirer");
@@ -840,6 +842,8 @@ void WarheadTypeExt::Serialize(T& Stm)
 		.Process(this->AutoTargetWalls)
 
 		.Process(this->CanKill)
+
+		.Process(this->HiddenDamageNumbers)
 
 		.Process(this->ReverseEngineer)
 

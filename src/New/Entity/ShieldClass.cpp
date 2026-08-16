@@ -1,4 +1,4 @@
-﻿#include "ShieldClass.h"
+#include "ShieldClass.h"
 
 #include <Ext/Anim/Body.h>
 #include <Ext/Techno/Body.h>
@@ -236,7 +236,9 @@ int ShieldClass::ReceiveDamage(args_ReceiveDamage* args)
 	const int maxDmg = GeneralUtils::SafeMultiply(max, pWHExt->Shield_ReceivedDamage_MaxMultiplier);
 	shieldDamage = Math::clamp(shieldDamage, minDmg, maxDmg);
 
-	if (Phobos::DisplayDamageNumbers && shieldDamage != 0)
+	const bool HiddenNumbers = pWHExt->HiddenDamageNumbers;
+
+	if (Phobos::Config::DamageNumbersCommands && Phobos::Config::DisplayDamageNumbers && !HiddenNumbers && shieldDamage != 0)
 		GeneralUtils::DisplayDamageNumberString(shieldDamage, DamageDisplayType::Shield, pTechno->GetRenderCoords(), TechnoExt::Fetch(pTechno)->DamageNumberOffset);
 
 	if (shieldDamage > 0)
