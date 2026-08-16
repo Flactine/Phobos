@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <ScenarioClass.h>
 
@@ -62,6 +62,12 @@ public:
 
 		int EVAIndex;
 
+		float BattleAdvantage_PlayerAdvantage;
+		float BattleAdvantage_PlayerDisadvantage;
+		float BattleAdvantage_PlayerOverwhelming;
+
+		Valueable<PlayerAdvantageStatus> BattleAdvantage_PlayerStatus;
+
 		int FiringAnimUpdateCount;
 
 		ExtData(ScenarioClass* OwnerObject) : Extension<ScenarioClass>(OwnerObject)
@@ -90,6 +96,10 @@ public:
 			, SpecialTracker {}
 			, FallingDownTracker {}
 			, EVAIndex { -2 }
+			, BattleAdvantage_PlayerAdvantage { 0.0f }
+			, BattleAdvantage_PlayerDisadvantage { 0.0f }
+			, BattleAdvantage_PlayerOverwhelming { 0.0f }
+			, BattleAdvantage_PlayerStatus { PlayerAdvantageStatus::Normal }
 			, FiringAnimUpdateCount { 0 }
 		{ }
 
