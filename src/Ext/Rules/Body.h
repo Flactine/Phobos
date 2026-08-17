@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <Utilities/Container.h>
 #include <Utilities/TemplateDef.h>
@@ -467,6 +467,13 @@ public:
 		int TintColorIronCurtain;
 		int TintColorForceShield;
 		int TintColorBerserk;
+
+		Valueable<int> CrusherLevel;
+		Valueable<int> CrushableLevel;
+		Valueable<int> OmniCrusherLevel;
+		Valueable<int> OmniCrushResistantLevel;
+		Nullable<int> BuildingCrushableLevel;
+		Valueable<int> WallCrushableLevel;
 
 		Valueable<bool> Decloak_OnBlockingMovement;
 		Valueable<bool> Decloak_OnCloakingWithLowHealth;
@@ -1123,6 +1130,14 @@ public:
 
 			, Parasite_GrappleAnim {}
 			, Parasite_AllowWaterExit {}
+
+			, CrusherLevel { 5 }
+			, CrushableLevel { 5 }
+			, OmniCrusherLevel { 10 }
+			, OmniCrushResistantLevel { 10 }
+			, BuildingCrushableLevel {}
+			, WallCrushableLevel { 10 }
+
 			, InfantryAutoDeploy { false }
 			, AdjacentWallDamage { 200 }
 
