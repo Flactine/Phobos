@@ -1255,6 +1255,7 @@ BuildingRadioLink.SyncOwner=      ; boolean, default to [General] -> BuildingRad
 
 - You can now customize damage or ROF multipliers of a garrison or tank bunker building.
 - You can now customize enter or exit sound of a tank bunker building.
+- You can now customize extra damage or ROF multipliers for vehicle types when they enter a tank bunker building. The final multiplier is calculated as the product of the unit's extra multiplier and the building's multiplier.
 
 In `rulesmd.ini`:
 ```ini
@@ -1265,7 +1266,18 @@ BunkerDamageMultiplier=     ; floating point value, default to [CombatDamage] ->
 BunkerROFMultMultiplier=    ; floating point value, default to [CombatDamage] -> BunkerROFMultMultiplier
 BunkerWallsUpSound=         ; Sound entry, default to [AudioVisual] -> BunkerWallsUpSound
 BunkerWallsDownSound=       ; Sound entry, default to [AudioVisual] -> BunkerWallsDownSound
+
+[SOMEVEHICLE]                    ; VehicleType (TechnoType)
+ExtraBunkerDamageMultiplier=     ; floating point value, default to 1.0
+ExtraBunkerROFMultiplier=        ; floating point value, default to 1.0
 ```
+
+- When a vehicle with `ExtraBunkerDamageMultiplier` or `ExtraBunkerROFMultiplier` enters a tank bunker building, the final combat attributes are calculated as follows:
+  - Final damage = `ExtraBunkerDamageMultiplier` (vehicle) &times; `BunkerDamageMultiplier` (building)
+  - Final ROF = `ExtraBunkerROFMultiplier` (vehicle) &times; `BunkerROFMultMultiplier` (building)
+- If the extra multiplier is not set for the vehicle type, it defaults to 1.0, meaning the building's multiplier is used as-is.
+- If the building's multiplier is not set, the corresponding default value from `[CombatDamage]` section is used.
+- It is recommended to use positive floating point values for these multipliers.
 
 ### Customizable selling buildup sequence length for buildings that can undeploy
 

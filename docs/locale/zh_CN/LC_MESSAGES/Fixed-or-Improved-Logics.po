@@ -3377,6 +3377,27 @@ msgstr "现在可以自定义驻军建筑或坦克堡垒的 Damage 或 ROF 倍�
 msgid "You can now customize enter or exit sound of a tank bunker building."
 msgstr "现在可以自定义坦克碉堡建筑进入和离开时的音效。"
 
+msgid "You can now customize extra damage or ROF multipliers for vehicle types when they enter a tank bunker building. The final multiplier is calculated as the product of the unit's extra multiplier and the building's multiplier."
+msgstr "现在可以为载具类型自定义进入坦克碉堡后的额外伤害或ROF倍率。最终倍率为单位额外倍率与建筑倍率的乘积。"
+
+msgid "When a vehicle with `ExtraBunkerDamageMultiplier` or `ExtraBunkerROFMultiplier` enters a tank bunker building, the final combat attributes are calculated as follows:"
+msgstr "当配置了 `ExtraBunkerDamageMultiplier` 或 `ExtraBunkerROFMultiplier` 的载具进入坦克碉堡后，最终战斗属性计算方式如下："
+
+msgid "Final damage = `ExtraBunkerDamageMultiplier` (vehicle) × `BunkerDamageMultiplier` (building)"
+msgstr "最终伤害 = `ExtraBunkerDamageMultiplier`（载具）× `BunkerDamageMultiplier`（建筑）"
+
+msgid "Final ROF = `ExtraBunkerROFMultiplier` (vehicle) × `BunkerROFMultMultiplier` (building)"
+msgstr "最终ROF = `ExtraBunkerROFMultiplier`（载具）× `BunkerROFMultMultiplier`（建筑）"
+
+msgid "If the extra multiplier is not set for the vehicle type, it defaults to 1.0, meaning the building's multiplier is used as-is."
+msgstr "若未配置载具的额外倍率，则默认值为 1.0，即不改变原建筑倍率。"
+
+msgid "If the building's multiplier is not set, the corresponding default value from `[CombatDamage]` section is used."
+msgstr "若未配置建筑的倍率，则继续使用 `[CombatDamage]` 小节中的对应默认值。"
+
+msgid "It is recommended to use positive floating point values for these multipliers."
+msgstr "建议使用正浮点数值作为这些倍率参数。"
+
 msgid ""
 "Customizable selling buildup sequence length for buildings that can "
 "undeploy"

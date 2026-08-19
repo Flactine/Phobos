@@ -171,6 +171,9 @@ public:
 	Nullable<float> OpenTransport_DamageMultiplier;
 	Nullable<bool> OpenTransport_FireWhileMoving;
 
+	Valueable<float> ExtraBunkerDamageMultiplier;
+	Valueable<float> ExtraBunkerROFMultiplier;
+
 	Valueable<bool> AutoTargetOwnPosition;
 	Valueable<bool> AutoTargetOwnPosition_Self;
 
@@ -702,6 +705,9 @@ public:
 		, OpenTransport_RangeBonus {}
 		, OpenTransport_DamageMultiplier {}
 		, OpenTransport_FireWhileMoving {}
+
+		, ExtraBunkerDamageMultiplier { 1.0f }
+		, ExtraBunkerROFMultiplier { 1.0f }
 
 		, AggressiveStance { false }
 		, AggressiveStance_Togglable {}
