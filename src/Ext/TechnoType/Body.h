@@ -412,6 +412,11 @@ public:
 
 	Nullable<bool> KeepAlive;
 
+	std::bitset<AdditionalAbilityCount> AdditionalVeteranAbilities;
+	std::bitset<AdditionalAbilityCount> AdditionalEliteAbilities;
+	Nullable<double> VeteranReload;
+	Nullable<double> VeteranEmptyReload;
+
 	Nullable<AnimTypeClass*> Wake;
 	Nullable<AnimTypeClass*> Wake_Grapple;
 	Nullable<AnimTypeClass*> Wake_Sinking;
@@ -980,6 +985,11 @@ public:
 		, JumpjetSpeedType { 3 }
 
 		, KeepAlive {}
+
+		, AdditionalVeteranAbilities {}
+		, AdditionalEliteAbilities {}
+		, VeteranReload {}
+		, VeteranEmptyReload {}
 
 		, Wake { }
 		, Wake_Grapple { }

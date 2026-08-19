@@ -373,6 +373,8 @@ public:
 		Valueable<bool> NoRearm_Temporal;
 		Valueable<bool> NoReload_UnderEMP;
 		Valueable<bool> NoReload_Temporal;
+		Valueable<double> VeteranReload;
+		Nullable<double> VeteranEmptyReload;
 		Valueable<bool> NoTurret_TrackTarget;
 
 		Valueable<bool> GatherWhenMCVDeploy;
@@ -712,6 +714,8 @@ public:
 
 		Valueable<bool> NoAlphaImageOnBuildup;
 
+		Valueable<bool> Warhead_PreventScatter;
+
 		ExtData(RulesClass* OwnerObject) : Extension<RulesClass>(OwnerObject)
 			, Storage_TiberiumIndex { -1 }
 			, HarvesterDumpAmount { 0.0f }
@@ -1037,6 +1041,8 @@ public:
 			, NoRearm_Temporal { false }
 			, NoReload_UnderEMP { false }
 			, NoReload_Temporal { false }
+			, VeteranReload { 1.0 }
+			, VeteranEmptyReload {}
 			, NoTurret_TrackTarget { false }
 			, GatherWhenMCVDeploy { true }
 			, AIFireSale { true }
@@ -1353,6 +1359,7 @@ public:
 
 			, NoAlphaImageOnBuildup { false }
 			, ReadyToNextMission_MovingCheck { false }
+			, Warhead_PreventScatter { false }
 		{ }
 
 		virtual ~ExtData() = default;
