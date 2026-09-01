@@ -4,6 +4,7 @@
 #include <Ext/Anim/Body.h>
 #include <Ext/House/Body.h>
 #include <Ext/SWType/Body.h>
+#include <Ext/Scenario/Body.h>
 #include <Ext/WarheadType/Body.h>
 
 #pragma region Update
@@ -284,9 +285,26 @@ DEFINE_HOOK(0x44FBBF, CreateBuildingFromINIFile_AfterCTOR_BeforeUnlimbo, 0x8)
 	GET(BuildingClass* const, pBld, ESI);
 
 	if (auto const pExt = BuildingExt::TryFetch(pBld))
+	{
 		pExt->IsCreatedFromMapFile = true;
 
+		GET_STACK(bool, hasPower, STACK_OFFSET(0xEC, -0xDC));
+
+		if (hasPower)
+			pExt->HasPowerFromMapFile = true;
+	}
+
 	return 0;
+}
+
+DEFINE_HOOK(0x44FDC5, CreateBuildingFromINIFile_AfterCTOR_AfterUnlimbo, 0xA)
+{
+	GET(BuildingClass* const, pBld, ESI);
+
+	if (auto const pExt = BuildingExt::TryFetch(pBld))
+		pExt->HasPowerFromMapFile = false;
+
+	return 0x44FDD3;
 }
 
 DEFINE_HOOK(0x440B4F, BuildingClass_Unlimbo_SetShouldRebuild, 0x5)
@@ -795,6 +813,153 @@ DEFINE_HOOK(0x6AA88D, StripClass_RecheckCameo_FindFactoryDehardCode, 0x6)
 	return 0;
 }
 
+DEFINE_HOOK(0x6AB6F5, SelectClass_Action_CheckBuildable, 0x6)
+{
+	enum { ContinueWithVoice = 0x6AB6FB, ContinueWithoutVoice = 0x6AB718, ShouldNotBuild = 0x6AB7D4 };
+
+	GET_STACK(bool, shouldDisableCameo, STACK_OFFSET(0xAC, -0x99));
+
+	if (!shouldDisableCameo)
+		return ContinueWithVoice;
+
+	GET(TechnoTypeClass* const, pType, EDI);
+
+	return TechnoTypeExt::Fetch(pType)->Cameo_AlwaysExist.Get(RulesExt::Global()->Cameo_AlwaysExist) ? ContinueWithoutVoice : ShouldNotBuild;
+}
+
+static bool __fastcall HouseClass_ShouldDisableCameo_Check(HouseClass* pThis, void* _, TechnoTypeClass* pType)
+{
+	if (TechnoTypeExt::Fetch(pType)->Cameo_AlwaysExist.Get(RulesExt::Global()->Cameo_AlwaysExist))
+		return false;
+
+	return pThis->ShouldDisableCameo(pType);
+}
+DEFINE_FUNCTION_JUMP(CALL, 0x4C9CEA, HouseClass_ShouldDisableCameo_Check);
+
+static BOOL __fastcall TechnoTypeClass_FindFactory_Check(TechnoTypeClass* pThis, void* _, bool allowOccupied, bool requirePower, bool requireCanBuild, HouseClass* pHouse)
+{
+	if (TechnoTypeExt::Fetch(pThis)->Cameo_AlwaysExist.Get(RulesExt::Global()->Cameo_AlwaysExist))
+		return 1;
+
+	return pThis->FindFactory(allowOccupied, requirePower, requireCanBuild, pHouse) ? 1 : 0;
+}
+DEFINE_FUNCTION_JUMP(CALL6, 0x4FA438, TechnoTypeClass_FindFactory_Check);
+
+DEFINE_HOOK(0x4FA6BB, HouseClass_BeginProduction_Check, 0x9)
+{
+	enum { SkipLog = 0x4FA6D1 };
+
+	GET(TechnoTypeClass* const, pType, EBP);
+
+	if (!TechnoTypeExt::Fetch(pType)->Cameo_AlwaysExist.Get(RulesExt::Global()->Cameo_AlwaysExist))
+		return 0;
+
+	GET(FactoryClass* const, pFactory, ESI);
+
+	R->EAX(pFactory->QueuedObjects.Count);
+	R->EBX(0);
+
+	return SkipLog;
+}
+
+DEFINE_HOOK(0x4C9D6E, FactoryClass_QueueProduction_CheckBuildable, 0x8)
+{
+	enum { CannotBuild = 0x4C9D64 };
+
+	GET(FactoryClass* const, pThis, ESI);
+	GET(TechnoTypeClass* const, pType, EDI);
+	GET_STACK(HouseClass* const, pHouse, STACK_OFFSET(0x14, 0x8));
+
+	if (!pHouse->IsControlledByHuman() || !TechnoTypeExt::Fetch(pType)->Cameo_AlwaysExist.Get(RulesExt::Global()->Cameo_AlwaysExist))
+		return 0;
+
+	auto& globalCount = ScenarioExt::Global()->CanBuildNowCount;
+	if (!++globalCount)
+	{
+		++globalCount;
+		for (const auto& pTechnoType : TechnoTypeClass::Array)
+		{
+			if (const auto pTechnoTypeExt = TechnoTypeExt::TryFetch(pTechnoType))
+				pTechnoTypeExt->CanBuildNowCount = 0;
+		}
+	}
+
+	auto buildCheck = [pHouse, &globalCount](TechnoTypeClass* pTechnoType) -> bool
+	{
+		const auto pTechnoTypeExt = TechnoTypeExt::Fetch(pTechnoType);
+
+		if (pTechnoTypeExt->CanBuildNowCount != globalCount)
+		{
+			pTechnoTypeExt->CanBuildNowCount = globalCount;
+			auto canBuildNow = [pHouse](TechnoTypeClass* pTechnoType) -> bool
+			{
+				if (pHouse->CanBuild(pTechnoType, false, false) != CanBuildResult::Buildable)
+					return false;
+
+				if (pTechnoType->WhatAmI() != AbstractType::AircraftType || !static_cast<AircraftTypeClass*>(pTechnoType)->AirportBound)
+					return true;
+
+				int ownedAircraft = 0;
+
+				for(const auto& pAircraft : RulesClass::Instance->PadAircraft)
+					ownedAircraft += pHouse->CountOwnedAndPresent(pAircraft);
+
+				return ownedAircraft < pHouse->AirportDocks;
+			};
+			pTechnoTypeExt->CanBuildNowCheck = canBuildNow(pTechnoType);
+		}
+
+		return pTechnoTypeExt->CanBuildNowCheck;
+	};
+
+	if (buildCheck(pType))
+		return 0;
+
+	GET_STACK(bool, isQueueCall, STACK_OFFSET(0x14, 0xC));
+
+	if (!isQueueCall)
+	{
+		if (pHouse->IsControlledByCurrentPlayer())
+			VocClass::PlayGlobal(RulesClass::Instance->ScoldSound, 0x2000, 1.0);
+	}
+	else if (pThis->QueuedObjects.Count > 0)
+	{
+		const int expectedCount = pThis->QueuedObjects.Count - 1;
+		int checkIndex = 0;
+
+		do
+		{
+			auto pNextType = pThis->QueuedObjects.Items[0];
+
+			for (int i = 0; i < expectedCount; ++i)
+				pThis->QueuedObjects.Items[i] = pThis->QueuedObjects.Items[i + 1];
+
+			if (buildCheck(pNextType))
+			{
+				pThis->QueuedObjects.Count = expectedCount;
+
+				R->EDI(pNextType);
+
+				GET_STACK(int, returnAddress, STACK_OFFSET(0x14, 0x0))
+				if (returnAddress == 0x4FA5D6)
+				{
+					R->Stack(STACK_OFFSET(0x48, 0x4), pNextType->WhatAmI());
+					R->Stack(STACK_OFFSET(0x48, 0x8), pNextType->GetArrayIndex());
+				}
+
+				return 0;
+			}
+
+			pThis->QueuedObjects.Items[expectedCount] = pNextType;
+		}
+		while (expectedCount > checkIndex++);
+
+		pThis->QueuedObjects.Count = 0;
+	}
+
+	return CannotBuild;
+}
+
 #pragma endregion
 
 #pragma region BarracksExitCell
@@ -1112,6 +1277,22 @@ DEFINE_HOOK(0x444D11, BuildingClass_ExitObject_ProductionAnimForInfantryFactory,
 	return 0;
 }
 
+DEFINE_HOOK(0x4501AF, AI_ConYard_CompleteProduction_ProductionAnim, 0x5)
+{
+	GET(BuildingClass*, pBuilding, ESI);
+	GET(TechnoClass*, pObject, EDI);
+
+	if (pBuilding->Owner->IsControlledByHuman())
+		return 0;
+
+	if (!pObject || pObject->WhatAmI() != AbstractType::Building)
+		return 0;
+
+	pBuilding->SendCommand(RadioCommand::RequestEndProduction, pBuilding);
+
+	return 0;
+}
+
 #pragma endregion
 
 DEFINE_HOOK(0x45670D, BuildingClass_GetRadialIndicatorRange_Extras, 0x7)
@@ -1389,12 +1570,12 @@ DEFINE_HOOK(0x6F6D9E, TechnoClass_Unlimbo_BuildingStartFacing, 0x7)
 {
 	GET(TechnoClass*, pThis, ESI);
 
-	if (abstract_cast<FootClass*>(pThis))
+	if (pThis->AbstractFlags & AbstractFlags::Foot)
 		return 0;
 
 	const auto pBuilding = static_cast<BuildingClass*>(pThis);
 
-	if (BuildingExt::Fetch(pBuilding)->IsCreatedFromMapFile)
+	if (pBuilding->Type->LaserFence || BuildingExt::Fetch(pBuilding)->IsCreatedFromMapFile)
 		return 0;
 
 	R->AH(static_cast<BYTE>(GetBuildingStartFacing(pBuilding)));

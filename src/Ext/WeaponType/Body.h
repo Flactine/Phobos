@@ -26,7 +26,7 @@ public:
 
 	Valueable<double> DiskLaser_Radius;
 	Valueable<Leptons> ProjectileRange;
-		Valueable<bool> ProjectileRange_ApplyModifiers;
+	Nullable<bool> ProjectileRange_ApplyModifiers;
 	Valueable<RadTypeClass*> RadType;
 	Nullable<ColorStruct> Bolt_Color[3];
 	Valueable<bool> Bolt_Disable[3];
@@ -34,6 +34,7 @@ public:
 	Valueable<int> Bolt_Arcs;
 	Valueable<int> Bolt_Duration;
 	Nullable<bool> Bolt_FollowFLH;
+	Nullable<AffectedHouse> IvanBomb_Visibility;
 	Nullable<bool> Strafing;
 	Nullable<int> Strafing_Shots;
 	Nullable<bool> Strafing_SimulateBurst;
@@ -124,7 +125,7 @@ public:
 	WeaponTypeExt(WeaponTypeClass* OwnerObject) : AbstractTypeExt(OwnerObject)
 		, DiskLaser_Radius { DiskLaserClass::Radius }
 		, ProjectileRange { Leptons(100000) }
-			, ProjectileRange_ApplyModifiers { true }
+		, ProjectileRange_ApplyModifiers {}
 		, RadType {}
 		, Bolt_Color {}
 		, Bolt_Disable { Valueable<bool>(false) }
@@ -132,6 +133,7 @@ public:
 		, Bolt_Arcs { 8 }
 		, Bolt_Duration { 17 }
 		, Bolt_FollowFLH {}
+		, IvanBomb_Visibility {}
 		, Strafing {}
 		, Strafing_Shots {}
 		, Strafing_SimulateBurst {}
@@ -259,6 +261,9 @@ public:
 	static bool SaveGlobals(PhobosStreamWriter& Stm);
 
 	static double OldRadius;
+	static PhobosMap<BombClass*, WeaponTypeExt*> BombExtMap;
+
+	static WeaponTypeExt* GetBombExtData(BombClass* pBomb);
 
 	static void DetonateAt(WeaponTypeClass* pThis, AbstractClass* pTarget, TechnoClass* pOwner, HouseClass* pFiringHouse = nullptr);
 	static void DetonateAt(WeaponTypeClass* pThis, AbstractClass* pTarget, TechnoClass* pOwner, int damage, HouseClass* pFiringHouse = nullptr);

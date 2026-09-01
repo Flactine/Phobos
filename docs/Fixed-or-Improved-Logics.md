@@ -295,10 +295,10 @@ This page describes all ingame logics that are fixed or improved in Phobos witho
 - Vehicles overlapping `Wall=true` OverlayTypes no longer display sell cursor and cannot be sold.
 - Fixed vehicles disguised as trees incorrectly displaying veterancy insignia when they shouldn't.
 - Fixed the issue where the AI's regular targeting would also target garrisonable buildings.
-- Fixed the issue that the move mission doesn't end when the techno is moving, which is mostly problematic for jumpjet and hover techno. Set `[General] -> ReadyToNextMission.MovingCheck` to true to disable the fix.
+- Fixed the issue that the move mission of the jumpjet does not end correctly.
 - AI team garrison scripts now re-evaluate destination immediately instead of trying to garrison ungarrisonable building before changing target.
 - Fixed the bug that `DeploysInto` and `UndeploysInto` will make damaged techno lose 1 health.
-- Fixed the issue that the Jumpjet must end its movement before starting the next mission.
+- Fixed the issue that techno must end its movement before starting the next mission, which is mostly problematic for jumpjet and hover techno. Set `[General] -> ReadyToNextMission.MovingCheck` to true to disable the fix.
 - Fixed an issue where parachute units would die upon landing if bridges were destroyed during their descent.
 - Voxel drawing code now skips sections that are invisible (have all zeros in the transform matrix main diagonal, meaning that the scale is 0% on all axes), thus increasing drawing performance for some voxels.
 - Fixed the bug that unit will play crashing voice & sound when dropped by warhead with `IsLocomotor=yes`.
@@ -331,6 +331,8 @@ This page describes all ingame logics that are fixed or improved in Phobos witho
 - Fixed an issue where setting a production building as `Primary` could cause it to enter an unload state.
 - Fixed the issue of significant lagging caused by frequent lighting updates due to the accumulation of a large amount of radsite in a short time.
 - `(Pre)ProductionAnim` building animations can now use `Powered` & `PoweredLight/Effect/Special` keys.
+- Fixed the bug where a building with `Factory=BuildingType` owned by the AI did not play `ProductionAnim` when placing a produced building.
+- Fixed the bug that buildings with passengers cannot unload via the Deploy hotkey or command bar button.
 
 ## Fixes / interactions with other extensions
 
@@ -387,6 +389,8 @@ This page describes all ingame logics that are fixed or improved in Phobos witho
 - Removed the restriction that prohibits InfantryTypes from using the InitialPayload logic.
 - `ProjectileRange` now has weapon range modifiers applied to it if greater than 0 and unless `ProjectileRange.ApplyModifiers` is set to false on the WeaponType.
 - Allowed customizing the default value of `[Warhead] -> PreventScatter` via `[CombatDamage] -> Warhead.PreventScatter`.
+- Allowed `SW.ShowCameo` and `SW.ManualFire` to work independently of `SW.AutoFire`.
+- Fixed the bug that Ares tunnel-type buildings cannot unload via the Deploy hotkey or command bar button.
 
 ## Newly added global settings
 
@@ -399,6 +403,20 @@ This category lists all features that are globally effective without needing to 
 It was originally planned to list global features that are exclusively related to specific Types, such as [Voxel light source customization](https://phobos.readthedocs.io/en/latest/Fixed-or-Improved-Logics.html#voxel-light-source-customization) and [Customizing effect of level lighting on air units](https://phobos.readthedocs.io/en/latest/Fixed-or-Improved-Logics.html#customizing-effect-of-level-lighting-on-air-units), under the corresponding Types categories. But later, features like [Veinholes & Weeds](https://phobos.readthedocs.io/en/latest/Fixed-or-Improved-Logics.html#veinholes-weeds) were found to be too difficult to separate, so they were just summarized according to the locations where INI flags are written. After all, the end users are modders.
 
 -->
+
+### Add a global default value for `KeepAlive`
+
+- Ares added accompanying [map trigger event#87 and event#88](http://ares-developers.github.io/Ares-docs/new/triggerevents.html#all-keepalives-destroyed-87-88) for [`KeepAlive`](http://ares-developers.github.io/Ares-docs/new/keepalive.html), but since using them for non-building technos requires manually adding them one by one, which is very troublesome, now you can use the following flag to define global default values by type.
+
+In `rulesmd.ini`:
+```ini
+[General]
+KeepAlive.Buildings=true      ; boolean
+KeepAlive.Defenses=true       ; boolean
+KeepAlive.Infantry=false      ; boolean
+KeepAlive.Units=false         ; boolean
+KeepAlive.Aircraft=false      ; boolean
+```
 
 ### Allow beacon placement hotkey in single player
 
@@ -549,6 +567,16 @@ Warhead.PreventScatter=false  ; boolean
 [AudioVisual]
 LeptonMindControlOffset=70    ; integer, in leptons
 MindControlRingOffset=140     ; integer, in leptons
+```
+
+### Customize whether mind-controlled Insignificant technos can be auto-targeted
+
+- In vanilla Red Alert 2, non-building technos with `Insignificant=yes` can never be acquired as auto targets, even when mind-controlled. In vanilla Yuri's Revenge, such technos become targetable once they are mind-controlled. Now you can customize it.
+
+In `rulesmd.ini`:
+```ini
+[CombatDamage]
+AutoTarget.InsignificantWhenMindControlled=true  ; boolean
 ```
 
 ### Customizing effect of level lighting on air units
@@ -2038,6 +2066,8 @@ FallingDownDamage.AllowEMP=true     ; boolean, deafult to [CombatDamage] -> Fall
 
 ### Customize crash spin multiplier
 
+- To address the issue that larger planes look silly when crashing due to spinning, Ares allows customizing whether technos with `Locomotor=Fly` spin when crashing. Here we provide another approach: customizing the speed multiplier of the spin.
+
 In `rulesmd.ini`:
 ```ini
 [SOMETECHNO]                      ; TechnoType, with Locomotor=Fly
@@ -2296,8 +2326,8 @@ This may subject to further changes.
 
 In `rulesmd.ini`:
 ```ini
-[SOMETECHNO]                   ; TechnoType
-ApproachTarget.PursuitTarget=  ; boolean, default to false
+[SOMETECHNO]                        ; TechnoType
+ApproachTarget.PursuitTarget=false  ; boolean
 ```
 
 ### Kill spawns on low power
@@ -2997,6 +3027,15 @@ AllowDamageOnSelf=       ; boolean, default to [General] -> AllowDamageOnSelf
 ### Berzerk (`Psychedelic`) duration stacking customization
 
 - By default `Psychedelic` warheads override the current duration of the berzerk effect regardless of if the new duration is higher or lower than the current one. This can now be customized with `Psychedelic.StackingMode`, with both global setting under `[CombatDamage]` and per-Warhead customization.
+  - Available stacking modes:
+    - `override`: Replace the current duration with the new one.
+    - `setifzero`: Only set the duration if the unit is not currently berzerk, otherwise the existing duration is kept.
+    - `min`: Keep the shorter of the current and new durations.
+    - `max`: Keep the longer of the current and new durations.
+    - `add`: Add the new duration to the current one.
+    - `subtract`: Subtract the new duration from the current one.
+    - `multiply`: Multiply the current duration by the new one.
+    - `divide`: Divide the current duration by the new one, no change if the new value is 0.
 
 In `rulesmd.ini`:
 ```ini
@@ -3292,6 +3331,20 @@ ROF.RandomDelay=0,2  ; integer - single or comma-sep. range (game frames)
 
 [SOMEWEAPON]         ; WeaponType
 ROF.RandomDelay=     ; integer - single or comma-sep. range (game frames), default to [CombatDamage] -> ROF.RandomDelay
+```
+
+### Customize ivan bomb visibility
+
+- Now you can customize who can see bomb image.
+  - This also affect on bomb detectors.
+
+In `rulesmd.ini`:
+```ini
+[AudioVisual]
+IvanIconVisibility=owner    ; List of Affected House Enumeration (none|owner/self|allies/ally|team|enemies/enemy|all)
+
+[SOMEWEAPON]                ; WeaponType
+IvanBomb.Visibility=        ; List of Affected House Enumeration (none|owner/self|allies/ally|team|enemies/enemy|all)
 ```
 
 ### Customizing whether passengers are kicked out when an aircraft fires

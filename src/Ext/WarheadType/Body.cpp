@@ -491,6 +491,8 @@ void WarheadTypeExt::LoadFromINIFile(CCINIClass* const pINI)
 	this->PreventPassengerEscape.Read(exINI, pSection, "PreventPassengerEscape");
 	this->PreventOccupantEscape.Read(exINI, pSection, "PreventOccupantEscape");
 
+	this->Ammo.Read(exINI, pSection, "Ammo");
+
 	// Convert.From & Convert.To
 	TypeConvertGroup::Parse(this->Convert_Pairs, exINI, pSection, AffectedHouse::All);
 
@@ -562,6 +564,7 @@ void WarheadTypeExt::LoadFromINIFile(CCINIClass* const pINI)
 		|| this->Taunt
 		|| this->KnockUp
 		|| this->Traction
+		|| this->Ammo
 	);
 
 	char tempBuffer[32];
@@ -899,10 +902,13 @@ void WarheadTypeExt::Serialize(T& Stm)
 		.Process(this->PreventScatter)
 
 		.Process(this->WasDetonatedOnAllMapObjects)
+		.Process(this->InApplyCrit)
 		.Process(this->RemainingAnimCreationInterval)
 		.Process(this->PossibleCellSpreadDetonate)
 		.Process(this->Reflected)
 		.Process(this->DamageAreaTarget)
+
+		.Process(this->Ammo)
 		;
 }
 

@@ -149,7 +149,8 @@ bool BuildingTypeExt::IsPoweredAnimBlocked(BuildingClass* pBuilding, bool powere
 
 	return pBuilding->CurrentMission != Mission::Construction
 		&& pBuilding->CurrentMission != Mission::Selling
-		&& !pBuilding->IsPowerOnline();
+		&& !pBuilding->IsPowerOnline()
+		&& !BuildingExt::Fetch(pBuilding)->HasPowerFromMapFile;
 }
 
 CellStruct BuildingTypeExt::GetWeaponFactoryDoor(BuildingClass* pThis)
@@ -1141,16 +1142,10 @@ bool BuildingTypeExt::AutoPlaceBuilding(BuildingClass* pBuilding)
 
 			const auto width = pOwnedType->GetFoundationWidth();
 			const auto height = pOwnedType->GetFoundationHeight(false);
-			auto cell = CellStruct::Empty;
-			int index = 0, check = width + 1, count = 0;
 
-			for (auto pFoundation = pOwnedType->FoundationOutside; *pFoundation != CellStruct { 0x7FFF, 0x7FFF }; ++pFoundation)
+			for (int index = 0; index < 4; ++index)
 			{
-				if (++index != check)
-					continue;
-
-				check += (++count & 1) ? 1 : (height * 2 + width + 1);
-				const auto outsideCell = baseCell + *pFoundation;
+				const auto outsideCell = baseCell + CellStruct { (index & 1) ? width : static_cast<short>(-1), (index / 2) ? height : static_cast<short>(-1) };
 				const auto pCell = MapClass::Instance.TryGetCellAt(outsideCell);
 
 				if (pCell && pCell->CanThisExistHere(pOwnedType->SpeedType, pOwnedType, pHouse))
@@ -1166,14 +1161,11 @@ bool BuildingTypeExt::AutoPlaceBuilding(BuildingClass* pBuilding)
 				const auto pCell = MapClass::Instance.TryGetCellAt(outsideCell);
 
 				if (pCell && pCell->CanThisExistHere(pOwnedType->SpeedType, pOwnedType, pHouse))
-					cell = outsideCell;
+				{
+					addPlaceEvent(outsideCell);
+					return true;
+				}
 			}
-
-			if (cell == CellStruct::Empty)
-				continue;
-
-			addPlaceEvent(cell);
-			return true;
 		}
 
 		return false;
@@ -1625,6 +1617,9 @@ void BuildingTypeExt::LoadFromINIFile(CCINIClass* const pINI)
 	this->RubbleIntact.Read(exINI, pSection, "Rubble.Intact");
 	this->RubbleIntactRemove.Read(exINI, pSection, "Rubble.Intact.Remove");
 
+	// Ares 0.E
+	this->Tunnel = exINI.ReadString(pSection, "Tunnel");
+
 	// Ares 3.0
 	this->UnitSell.Read(exINI, pSection, "UnitSell");
 }
@@ -1764,6 +1759,9 @@ void BuildingTypeExt::Serialize(T& Stm)
 		// Ares 0.A
 		.Process(this->RubbleIntact)
 		.Process(this->RubbleIntactRemove)
+
+		// Ares 0.E
+		.Process(this->Tunnel)
 
 		// Ares 3.0
 		.Process(this->UnitSell)
