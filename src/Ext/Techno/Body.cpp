@@ -284,6 +284,8 @@ double TechnoExt::GetCurrentFirepowerMultiplier(TechnoClass* pThis)
 	{
 		const auto pBunkerTypeExt = BuildingTypeExt::Fetch(pBunker->Type);
 		mult *= pBunkerTypeExt->BuildingBunkerDamageMult.Get(RulesClass::Instance->BunkerDamageMultiplier);
+		const auto pUnitTypeExt = TechnoTypeExt::Fetch(pThis->GetTechnoType());
+		mult *= pUnitTypeExt->ExtraBunkerDamageMultiplier;
 	}
 	else if (pThis->InOpenToppedTransport && pThis->Transporter)
 	{
