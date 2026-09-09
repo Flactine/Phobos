@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <HouseTypeClass.h>
 
@@ -26,9 +26,15 @@ public:
 	}
 
 	EVAType EVATag;
+	Valueable<int> Music_Combat;
+	Valueable<int> Music_Losing;
+	Valueable<int> Music_Trumpet;
 
 	HouseTypeExt(HouseTypeClass* OwnerObject) : AbstractTypeExt(OwnerObject)
 		, EVATag { -2 }
+		, Music_Combat { -2 }
+		, Music_Losing { -2 }
+		, Music_Trumpet { -2 }
 	{ }
 
 	virtual ~HouseTypeExt() = default;

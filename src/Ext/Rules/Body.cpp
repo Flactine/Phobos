@@ -1,4 +1,4 @@
-﻿#include "Body.h"
+#include "Body.h"
 
 #include <cmath>
 
@@ -751,6 +751,33 @@ void RulesExt::ExtData::LoadBeforeTypeData(RulesClass* pThis, CCINIClass* pINI)
 	this->SecondaryFireSequenceLandOnly.Read(exINI, GameStrings::General, "SecondaryFireSequenceLandOnly");
 	this->AutoRemoveEarliestBeacon.Read(exINI, GameStrings::General, "AutoRemoveEarliestBeacon");
 	this->AllowBeaconHotKeyInSinglePlayer.Read(exINI, GameStrings::General, "AllowBeaconHotKeyInSinglePlayer");
+
+	// Battle Advantage
+	this->BattleAdvantage_Enabled.Read(exINI, GameStrings::CombatDamage, "BattleAdvantage.Enabled");
+	this->BattleAdvantage_AdvantageMaxValue.Read(exINI, GameStrings::CombatDamage, "BattleAdvantage.AdvantageMaxValue");
+	this->BattleAdvantage_AdvantageDecayRate.Read(exINI, GameStrings::CombatDamage, "BattleAdvantage.AdvantageDecayRate");
+
+	this->BattleAdvantage_DisadvantageMaxValue.Read(exINI, GameStrings::CombatDamage, "BattleAdvantage.DisadvantageMaxValue");
+	this->BattleAdvantage_DisadvantageDecayRate.Read(exINI, GameStrings::CombatDamage, "BattleAdvantage.DisadvantageDecayRate");
+
+	this->BattleAdvantage_IntensityUpperThreshold.Read(exINI, GameStrings::CombatDamage, "BattleAdvantage.IntensityUpperThreshold");
+	this->BattleAdvantage_IntensityLowerThreshold.Read(exINI, GameStrings::CombatDamage, "BattleAdvantage.IntensityLowerThreshold");
+	this->BattleAdvantage_CasualtyRatioUpperThreshold.Read(exINI, GameStrings::CombatDamage, "BattleAdvantage.CasualtyRatioUpperThreshold");
+	this->BattleAdvantage_CasualtyRatioLowerThreshold.Read(exINI, GameStrings::CombatDamage, "BattleAdvantage.CasualtyRatioLowerThreshold");
+
+	this->BattleAdvantage_OverwhelmingMaxValue.Read(exINI, GameStrings::CombatDamage, "BattleAdvantage.OverwhelmingMaxValue");
+	this->BattleAdvantage_OverwhelmingDecayRate.Read(exINI, GameStrings::CombatDamage, "BattleAdvantage.OverwhelmingDecayRate");
+	this->BattleAdvantage_OverwhelmingUpperThreshold.Read(exINI, GameStrings::CombatDamage, "BattleAdvantage.OverwhelmingUpperThreshold");
+	this->BattleAdvantage_OverwhelmingLowerThreshold.Read(exINI, GameStrings::CombatDamage, "BattleAdvantage.OverwhelmingLowerThreshold");
+
+	this->BattleAdvantage_VeteranLostMultiplier.Read(exINI, GameStrings::CombatDamage, "BattleAdvantage.VeteranLostMultiplier");
+	this->BattleAdvantage_EliteLostMultiplier.Read(exINI, GameStrings::CombatDamage, "BattleAdvantage.EliteLostMultiplier");
+	this->BattleAdvantage_VeteranKillingMultiplier.Read(exINI, GameStrings::CombatDamage, "BattleAdvantage.VeteranKillingMultiplier");
+	this->BattleAdvantage_EliteKillingMultiplier.Read(exINI, GameStrings::CombatDamage, "BattleAdvantage.EliteKillingMultiplier");
+
+	this->BattleAdvantage_MindControlledLostMultiplier.Read(exINI, GameStrings::CombatDamage, "BattleAdvantage.MindControlledLostMultiplier");
+	this->BattleAdvantage_MindControlledKillingMultiplier.Read(exINI, GameStrings::CombatDamage, "BattleAdvantage.MindControlledKillingMultiplier");
+
 	this->StartFacing.Read(exINI, GameStrings::General, "BuildingStartFacing");
 	this->StartFacing_Random.Read(exINI, GameStrings::General, "BuildingStartFacing.Random");
 
@@ -1383,6 +1410,25 @@ void RulesExt::ExtData::Serialize(T& Stm)
 		.Process(this->DefaultLandingAnim_Carryall)
 		.Process(this->TeamDelays_DynamicType)
 		.Process(this->TeamDelays_Count)
+		.Process(this->BattleAdvantage_Enabled)
+		.Process(this->BattleAdvantage_AdvantageMaxValue)
+		.Process(this->BattleAdvantage_AdvantageDecayRate)
+		.Process(this->BattleAdvantage_DisadvantageMaxValue)
+		.Process(this->BattleAdvantage_DisadvantageDecayRate)
+		.Process(this->BattleAdvantage_IntensityUpperThreshold)
+		.Process(this->BattleAdvantage_IntensityLowerThreshold)
+		.Process(this->BattleAdvantage_CasualtyRatioUpperThreshold)
+		.Process(this->BattleAdvantage_CasualtyRatioLowerThreshold)
+		.Process(this->BattleAdvantage_OverwhelmingMaxValue)
+		.Process(this->BattleAdvantage_OverwhelmingDecayRate)
+		.Process(this->BattleAdvantage_OverwhelmingUpperThreshold)
+		.Process(this->BattleAdvantage_OverwhelmingLowerThreshold)
+		.Process(this->BattleAdvantage_VeteranLostMultiplier)
+		.Process(this->BattleAdvantage_EliteLostMultiplier)
+		.Process(this->BattleAdvantage_VeteranKillingMultiplier)
+		.Process(this->BattleAdvantage_EliteKillingMultiplier)
+		.Process(this->BattleAdvantage_MindControlledLostMultiplier)
+		.Process(this->BattleAdvantage_MindControlledKillingMultiplier)
 		.Process(this->BerzerkMission)
 		.Process(this->BunkerStateUpdateDelay)
 		.Process(this->AllowChatBoxInSinglePlayer)

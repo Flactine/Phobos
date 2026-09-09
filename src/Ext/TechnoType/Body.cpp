@@ -1839,6 +1839,17 @@ void TechnoTypeExt::LoadFromINIFile(CCINIClass* const pINI)
 	// VoiceIFVRepair from Ares 0.2
 	this->VoiceIFVRepair.Read(exINI, pSection, "VoiceIFVRepair");
 	this->ParseVoiceWeaponAttacks(exINI, pSection, this->VoiceWeaponAttacks, this->VoiceEliteWeaponAttacks);
+
+	// Battle Advantage
+	this->BattleAdvantage_KillingValue.Read(exINI, pSection, "BattleAdvantage.KillingValue");
+	this->BattleAdvantage_OverwhelmingValue.Read(exINI, pSection, "BattleAdvantage.OverwhelmingValue");
+	this->BattleAdvantage_LostValue.Read(exINI, pSection, "BattleAdvantage.LostValue");
+	this->BattleAdvantage_VeteranLostMultiplier.Read(exINI, pSection, "BattleAdvantage.VeteranLostMultiplier");
+	this->BattleAdvantage_EliteLostMultiplier.Read(exINI, pSection, "BattleAdvantage.EliteLostMultiplier");
+	this->BattleAdvantage_VeteranKillingMultiplier.Read(exINI, pSection, "BattleAdvantage.VeteranKillingMultiplier");
+	this->BattleAdvantage_EliteKillingMultiplier.Read(exINI, pSection, "BattleAdvantage.EliteKillingMultiplier");
+	this->BattleAdvantage_MindControlledLostMultiplier.Read(exINI, pSection, "BattleAdvantage.MindControlledLostMultiplier");
+	this->BattleAdvantage_MindControlledKillingMultiplier.Read(exINI, pSection, "BattleAdvantage.MindControlledKillingMultiplier");
 }
 
 template <typename T>
