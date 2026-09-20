@@ -1,4 +1,4 @@
-﻿#include "Body.h"
+#include "Body.h"
 
 #include <GameOptionsClass.h>
 #include <Ext/Anim/Body.h>
@@ -868,7 +868,7 @@ DEFINE_HOOK(0x4C9D6E, FactoryClass_QueueProduction_CheckBuildable, 0x8)
 	enum { CannotBuild = 0x4C9D64 };
 
 	GET(FactoryClass* const, pThis, ESI);
-	GET(TechnoTypeClass*, pType, EDI);
+	GET(TechnoTypeClass* const, pType, EDI);
 	GET_STACK(HouseClass* const, pHouse, STACK_OFFSET(0x14, 0x8));
 
 	if (!pHouse->IsControlledByHuman() || !TechnoTypeExt::Fetch(pType)->Cameo_AlwaysExist.Get(RulesExt::Global()->Cameo_AlwaysExist))
@@ -886,32 +886,32 @@ DEFINE_HOOK(0x4C9D6E, FactoryClass_QueueProduction_CheckBuildable, 0x8)
 	}
 
 	auto buildCheck = [pHouse, &globalCount](TechnoTypeClass* pTechnoType) -> bool
-	{
-		const auto pTechnoTypeExt = TechnoTypeExt::Fetch(pTechnoType);
-
-		if (pTechnoTypeExt->CanBuildNowCount != globalCount)
 		{
-			pTechnoTypeExt->CanBuildNowCount = globalCount;
-			auto canBuildNow = [pHouse](TechnoTypeClass* pTechnoType) -> bool
+			const auto pTechnoTypeExt = TechnoTypeExt::Fetch(pTechnoType);
+
+			if (pTechnoTypeExt->CanBuildNowCount != globalCount)
 			{
-				if (pHouse->CanBuild(pTechnoType, false, false) != CanBuildResult::Buildable)
-					return false;
+				pTechnoTypeExt->CanBuildNowCount = globalCount;
+				auto canBuildNow = [pHouse](TechnoTypeClass* pTechnoType) -> bool
+					{
+						if (pHouse->CanBuild(pTechnoType, false, false) != CanBuildResult::Buildable)
+							return false;
 
-				if (pTechnoType->WhatAmI() != AbstractType::AircraftType || !static_cast<AircraftTypeClass*>(pTechnoType)->AirportBound)
-					return true;
+						if (pTechnoType->WhatAmI() != AbstractType::AircraftType || !static_cast<AircraftTypeClass*>(pTechnoType)->AirportBound)
+							return true;
 
-				int ownedAircraft = 0;
+						int ownedAircraft = 0;
 
-				for(const auto& pAircraft : RulesClass::Instance->PadAircraft)
-					ownedAircraft += pHouse->CountOwnedAndPresent(pAircraft);
+						for (const auto& pAircraft : RulesClass::Instance->PadAircraft)
+							ownedAircraft += pHouse->CountOwnedAndPresent(pAircraft);
 
-				return ownedAircraft < pHouse->AirportDocks;
-			};
-			pTechnoTypeExt->CanBuildNowCheck = canBuildNow(pTechnoType);
-		}
+						return ownedAircraft < pHouse->AirportDocks;
+					};
+				pTechnoTypeExt->CanBuildNowCheck = canBuildNow(pTechnoType);
+			}
 
-		return pTechnoTypeExt->CanBuildNowCheck;
-	};
+			return pTechnoTypeExt->CanBuildNowCheck;
+		};
 
 	if (buildCheck(pType))
 		return 0;
@@ -925,34 +925,35 @@ DEFINE_HOOK(0x4C9D6E, FactoryClass_QueueProduction_CheckBuildable, 0x8)
 	}
 	else if (pThis->QueuedObjects.Count > 0)
 	{
-		const int maxIndex = pThis->QueuedObjects.Count - 1;
+		const int expectedCount = pThis->QueuedObjects.Count - 1;
 		int checkIndex = 0;
 
 		do
 		{
-			const auto pNextType = pThis->QueuedObjects.Items[0];
+			auto pNextType = pThis->QueuedObjects.Items[0];
 
-			for (int i = 0; i < maxIndex; ++i)
+			for (int i = 0; i < expectedCount; ++i)
 				pThis->QueuedObjects.Items[i] = pThis->QueuedObjects.Items[i + 1];
 
-			pThis->QueuedObjects.Items[maxIndex] = pType;
-			pType = pNextType;
-
-			if (buildCheck(pType))
+			if (buildCheck(pNextType))
 			{
-				R->EDI(pType);
+				pThis->QueuedObjects.Count = expectedCount;
+
+				R->EDI(pNextType);
 
 				GET_STACK(int, returnAddress, STACK_OFFSET(0x14, 0x0))
-				if (returnAddress == 0x4FA5D6)
-				{
-					R->Stack(STACK_OFFSET(0x48, 0x4), pType->WhatAmI());
-					R->Stack(STACK_OFFSET(0x48, 0x8), pType->GetArrayIndex());
-				}
+					if (returnAddress == 0x4FA5D6)
+					{
+						R->Stack(STACK_OFFSET(0x48, 0x4), pNextType->WhatAmI());
+						R->Stack(STACK_OFFSET(0x48, 0x8), pNextType->GetArrayIndex());
+					}
 
 				return 0;
 			}
+
+			pThis->QueuedObjects.Items[expectedCount] = pNextType;
 		}
-		while (maxIndex > checkIndex++);
+		while (expectedCount > checkIndex++);
 
 		pThis->QueuedObjects.Count = 0;
 	}
