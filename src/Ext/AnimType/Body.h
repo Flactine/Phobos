@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <AnimTypeClass.h>
 
@@ -62,6 +62,7 @@ public:
 	Valueable<bool> ExtraShadow;
 	ValueableIdx<VocClass> DetachedReport;
 	Valueable<AffectedHouse> VisibleTo;
+	Valueable<bool> VisibleToObserver;
 	Valueable<bool> VisibleTo_ConsiderInvokerAsOwner;
 	Valueable<bool> RestrictVisibilityIfCloaked;
 	Valueable<bool> DetachOnCloak;
@@ -115,6 +116,7 @@ public:
 		, ExtraShadow { true }
 		, DetachedReport {}
 		, VisibleTo { AffectedHouse::All }
+		, VisibleToObserver { true }
 		, VisibleTo_ConsiderInvokerAsOwner { false }
 		, RestrictVisibilityIfCloaked { false }
 		, DetachOnCloak { true }
