@@ -2138,7 +2138,6 @@ void TechnoTypeExt::Serialize(T& Stm)
 		.Process(this->IsMetTheEssentialConditions)
 		.Process(this->IsGreyCameoForCurrentPlayer)
 		.Process(this->CanBuildNowCheck)
-		.Process(this->CanBuildNowCount)
 		.Process(this->UIDescription_Unbuildable)
 
 		.Process(this->CameoPal)
