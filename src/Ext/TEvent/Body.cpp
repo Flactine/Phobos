@@ -1,4 +1,4 @@
-﻿#include "Body.h"
+#include "Body.h"
 
 #include <Ext/Scenario/Body.h>
 #include <New/Entity/ShieldClass.h>
@@ -341,7 +341,7 @@ bool TEventExt::AttachedIsUnderAttachedEffectTEvent(TEventClass* pThis, ObjectCl
 		return false;
 	}
 
-	if (TechnoExt::Fetch(pTechno)->HasAttachedEffects({ pDesiredType }, false, false, nullptr, nullptr, nullptr, nullptr))
+	if (TechnoExt::Fetch(pTechno)->HasAttachedEffects({ pDesiredType }, false, false, false, nullptr, nullptr, nullptr, nullptr))
 		return true;
 
 	return false;
