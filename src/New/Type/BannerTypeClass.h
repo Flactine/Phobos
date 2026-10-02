@@ -28,6 +28,10 @@ public:
 	//Clamp to screen
 	Valueable<bool> ClampToScreen;
 
+	// Position
+	Valueable<HorizontalPosition> Horizontal;
+	Valueable<VerticalPosition> Vertical;
+
 	BannerTypeClass(const char* const pTitle) : Enumerable<BannerTypeClass>(pTitle)
 		, PCX { }
 		, Shape { }
@@ -40,6 +44,8 @@ public:
 		, Delay { -1 }
 		, Shape_RefreshAfterDelay { false }
 		, ClampToScreen { true }
+		, Horizontal { HorizontalPosition::Center }
+		, Vertical { VerticalPosition::Center }
 	{ }
 
 	virtual void LoadFromINI(CCINIClass* pINI);
