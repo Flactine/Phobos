@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <New/Type/AttachEffectTypeClass.h>
 
@@ -141,6 +141,9 @@ struct AttachEffectTechnoProperties
 	bool HasOnDamageDiscardables;
 	bool HasRestrictedArmorMultipliers;
 	bool HasCritModifiers;
+	bool HasImmuneToCapture;
+	bool HasImmuneToInfiltrate;
+	bool HasImmuneToEngineerRepair;
 
 	AttachEffectTechnoProperties() :
 		FirepowerMultiplier { 1.0 }
@@ -158,5 +161,8 @@ struct AttachEffectTechnoProperties
 		, HasOnDamageDiscardables { false }
 		, HasRestrictedArmorMultipliers { false }
 		, HasCritModifiers { false }
+		, HasImmuneToCapture { false }
+		, HasImmuneToInfiltrate { false }
+		, HasImmuneToEngineerRepair { false }
 	{ }
 };
