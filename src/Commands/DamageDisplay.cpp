@@ -1,4 +1,4 @@
-﻿#include "DamageDisplay.h"
+#include "DamageDisplay.h"
 
 #include <Utilities/GeneralUtils.h>
 
@@ -24,5 +24,12 @@ const wchar_t* DamageDisplayCommandClass::GetUIDescription() const
 
 void DamageDisplayCommandClass::Execute(WWKey eInput) const
 {
-	Phobos::DisplayDamageNumbers = !Phobos::DisplayDamageNumbers;
+	Phobos::Config::DisplayDamageNumbers = !Phobos::Config::DisplayDamageNumbers;
+
+	if (Phobos::Config::DisplayDamageNumbers)
+		MessageListClass::Instance.PrintMessage(GeneralUtils::LoadStringUnlessMissing("MSG:DisplayDamageOn", L"Damage numbers display enabled."), RulesClass::Instance->MessageDelay, HouseClass::CurrentPlayer->ColorSchemeIndex, true);
+	else
+		MessageListClass::Instance.PrintMessage(GeneralUtils::LoadStringUnlessMissing("MSG:DisplayDamageOff", L"Damage numbers display disabled."), RulesClass::Instance->MessageDelay, HouseClass::CurrentPlayer->ColorSchemeIndex, true);
+
+	VocClass::PlayGlobal(RulesClass::Instance->IncomingMessage, 0x2000, 1.0f);
 }

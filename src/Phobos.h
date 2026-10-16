@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <Phobos.version.h>
 #include <Windows.h>
 
@@ -48,7 +48,6 @@ public:
 	static const char* AppIconPath;
 	static const wchar_t* VersionDescription;
 	static bool ShowCurrentInfo;
-	static bool DisplayDamageNumbers;
 	static bool IsLoadingSaveGame;
 	static bool ShouldSave;
 	static std::wstring CustomGameSaveDescription;
@@ -99,6 +98,7 @@ public:
 	{
 	public:
 		static bool DebugToolEnable;
+		static bool DisplayDamageNumbers;
 		static bool ToolTipDescriptions;
 		static bool ToolTipBlur;
 		static bool PrioritySelectionFiltering;
@@ -174,6 +174,7 @@ public:
 		static bool SelectCapturedCommand;
 		static bool SuperWeaponSidebarCommands;
 		static bool DevelopmentCommands;
+		static bool DamageNumbersCommand;
 	};
 
 	class Misc

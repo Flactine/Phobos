@@ -1,4 +1,4 @@
-﻿#include "Constructs.h"
+#include "Constructs.h"
 #include "GeneralUtils.h"
 #include "Debug.h"
 #include <Theater.h>
@@ -234,7 +234,7 @@ void GeneralUtils::DisplayDamageNumberString(int damage, DamageDisplayType type,
 		color = damage > 0 ? ColorStruct { 255, 0, 0 } : ColorStruct { 0, 255, 0 };
 		break;
 	case DamageDisplayType::Shield:
-		color = damage > 0 ? ColorStruct { 0, 160, 255 } : ColorStruct { 0, 255, 230 };
+		color = damage > 0 ? ColorStruct { 22, 255, 255 } : ColorStruct { 0, 160, 255 };
 		break;
 	case DamageDisplayType::Intercept:
 		color = damage > 0 ? ColorStruct { 255, 128, 128 } : ColorStruct { 128, 255, 128 };
@@ -246,7 +246,7 @@ void GeneralUtils::DisplayDamageNumberString(int damage, DamageDisplayType type,
 	const int maxOffset = Unsorted::CellWidthInPixels / 2;
 	int width = 0, height = 0;
 	wchar_t damageStr[0x20];
-	swprintf_s(damageStr, L"%d", damage);
+	swprintf_s(damageStr, L"%c%d", damage > 0 ? L'-' : L'+', abs(damage));
 
 	BitFont::Instance->GetTextDimension(damageStr, &width, &height, 120);
 
