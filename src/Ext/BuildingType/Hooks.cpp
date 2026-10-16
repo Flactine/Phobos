@@ -1,4 +1,4 @@
-﻿#include "Body.h"
+#include "Body.h"
 
 #include <Ext/Building/Body.h>
 #include <Ext/Rules/Body.h>
@@ -259,7 +259,8 @@ DEFINE_HOOK(0x6FE421, TechnoClass_FireAt_BunkerDamageBonus, 0xB)
 	if (const auto Building = specific_cast<BuildingClass*>(pThis->BunkerLinkedItem))
 	{
 		GET_STACK(const int, damage, STACK_OFFSET(0xC8, -0x9C));
-		R->EAX(static_cast<int>(damage * BuildingTypeExt::Fetch(Building->Type)->BuildingBunkerDamageMult.Get(RulesClass::Instance->OccupyDamageMultiplier)));
+		const auto pUnitTypeExt = TechnoTypeExt::Fetch(pThis->GetTechnoType());
+		R->EAX(static_cast<int>(damage* BuildingTypeExt::Fetch(Building->Type)->BuildingBunkerDamageMult.Get(RulesClass::Instance->OccupyDamageMultiplier)* pUnitTypeExt->ExtraBunkerDamageMultiplier));
 		return ApplyDamageBonus;
 	}
 
@@ -297,7 +298,8 @@ DEFINE_HOOK(0x6FD1C7, TechnoClass_RearmDelay_BuildingBunkerROFMult, 0xC)
 
 	if (const auto Building = specific_cast<BuildingClass*>(pThis->BunkerLinkedItem))
 	{
-		const auto multiplier = BuildingTypeExt::Fetch(Building->Type)->BuildingBunkerROFMult.Get(RulesClass::Instance->BunkerROFMultiplier);
+		const auto pUnitTypeExt = TechnoTypeExt::Fetch(pThis->GetTechnoType());
+		const auto multiplier = BuildingTypeExt::Fetch(Building->Type)->BuildingBunkerROFMult.Get(RulesClass::Instance->BunkerROFMultiplier) * pUnitTypeExt->ExtraBunkerROFMultiplier;
 
 		if (multiplier > 0.0f)
 		{
