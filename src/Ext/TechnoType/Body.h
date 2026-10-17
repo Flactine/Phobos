@@ -699,6 +699,17 @@ public:
 	Nullable<bool> Unsellable;
 	Nullable<bool> KeepAlive;
 
+	// Battle Advantage
+	Nullable<float> BattleAdvantage_KillingValue;
+	Valueable<float> BattleAdvantage_OverwhelmingValue;
+	Nullable<float> BattleAdvantage_LostValue;
+	Nullable<float> BattleAdvantage_VeteranLostMultiplier;
+	Nullable<float> BattleAdvantage_EliteLostMultiplier;
+	Nullable<float> BattleAdvantage_VeteranKillingMultiplier;
+	Nullable<float> BattleAdvantage_EliteKillingMultiplier;
+	Nullable<float> BattleAdvantage_MindControlledLostMultiplier;
+	Nullable<float> BattleAdvantage_MindControlledKillingMultiplier;
+
 	TechnoTypeExt(TechnoTypeClass* OwnerObject) : ObjectTypeExt(OwnerObject)
 		, Array {}
 
@@ -1231,6 +1242,16 @@ public:
 		, ExtraThreatCoefficient_InRangeDistance {}
 		, ExtraThreatCoefficient_Facing {}
 		, ExtraThreatCoefficient_DistanceToLastTarget {}
+
+		, BattleAdvantage_KillingValue {}
+		, BattleAdvantage_OverwhelmingValue { 0.0 }
+		, BattleAdvantage_LostValue {}
+		, BattleAdvantage_VeteranLostMultiplier {}
+		, BattleAdvantage_EliteLostMultiplier {}
+		, BattleAdvantage_VeteranKillingMultiplier {}
+		, BattleAdvantage_EliteKillingMultiplier {}
+		, BattleAdvantage_MindControlledLostMultiplier {}
+		, BattleAdvantage_MindControlledKillingMultiplier {}
 
 		, DropCrate {}
 
