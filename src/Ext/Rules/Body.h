@@ -475,6 +475,13 @@ public:
 		int TintColorForceShield;
 		int TintColorBerserk;
 
+		Valueable<int> CrusherLevel;
+		Valueable<int> CrushableLevel;
+		Valueable<int> OmniCrusherLevel;
+		Valueable<int> OmniCrushResistantLevel;
+		Nullable<int> BuildingCrushableLevel;
+		Valueable<int> WallCrushableLevel;
+
 		Valueable<bool> Decloak_OnBlockingMovement;
 		Valueable<bool> Decloak_OnCloakingWithLowHealth;
 		Valueable<bool> Decloak_OnCrushing;
@@ -1164,6 +1171,13 @@ public:
 
 			, AIAdjacentMax { -1 }
 			, AIAdjacentMax_Campaign {}
+
+			, CrusherLevel { 5 }
+			, CrushableLevel { 5 }
+			, OmniCrusherLevel { 10 }
+			, OmniCrushResistantLevel { 10 }
+			, BuildingCrushableLevel {}
+			, WallCrushableLevel { 10 }
 
 			, Parasite_GrappleAnim {}
 			, Parasite_AllowWaterExit {}
