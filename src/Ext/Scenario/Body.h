@@ -37,7 +37,6 @@ public:
 		bool SWSidebar_Enable;
 		std::vector<int> SWSidebar_Indices;
 
-		int CanBuildNowCount;
 		DWORD OwnerBitfield_BuildingType;
 		DWORD OwnerBitfield_InfantryType;
 		DWORD OwnerBitfield_VehicleType;
@@ -86,7 +85,6 @@ public:
 			, TransportReloaders {}
 			, SWSidebar_Enable { true }
 			, SWSidebar_Indices {}
-			, CanBuildNowCount { 0 }
 			, OwnerBitfield_BuildingType { 0 }
 			, OwnerBitfield_InfantryType { 0 }
 			, OwnerBitfield_VehicleType { 0 }

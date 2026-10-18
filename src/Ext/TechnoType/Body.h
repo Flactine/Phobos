@@ -383,7 +383,6 @@ public:
 	bool IsMetTheEssentialConditions; // Not read from ini
 	bool IsGreyCameoForCurrentPlayer; // Not read from ini
 	bool CanBuildNowCheck; // Not read from ini
-	int CanBuildNowCount; // Not read from ini
 	Valueable<CSFText> UIDescription_Unbuildable;
 
 	CustomPalette CameoPal;
@@ -990,7 +989,6 @@ public:
 		, IsMetTheEssentialConditions { false }
 		, IsGreyCameoForCurrentPlayer { false }
 		, CanBuildNowCheck { false }
-		, CanBuildNowCount { 0 }
 		, UIDescription_Unbuildable {}
 
 		, CameoPal {}
