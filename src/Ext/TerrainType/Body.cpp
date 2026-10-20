@@ -93,8 +93,10 @@ void TerrainTypeExt::LoadFromINIFile(CCINIClass* const pINI)
 
 	this->IgnoredByMouse.Read(exINI, pSection, "IgnoredByMouse");
 
+	INI_EX exArtINI(&CCINIClass::INI_Art);
+
 	this->PaletteFile.Read(&CCINIClass::INI_Art, pThis->ImageFile, "Palette");
-	this->PaletteRemap.Read(&CCINIClass::INI_Art, pThis->ImageFile, "PaletteRemap");
+	this->PaletteRemap.Read(exArtINI, pThis->ImageFile, "PaletteRemap");
 	this->Palette = GeneralUtils::BuildPalette(this->PaletteFile);
 
 	// The generated color schemes replace palette indices 16-31 with shades of the owning house
