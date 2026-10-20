@@ -1,5 +1,7 @@
-﻿#include <Ext/Building/Body.h>
+#include <Ext/Building/Body.h>
 #include <Utilities/AresFunctions.h>
+#include <algorithm>
+#include <iterator>
 
 DEFINE_PATCH(0x5F3E70, 0x83, 0xEC, 0x10, 0x55, 0x56) // Disbale Ares::ObjectClass_Update_AlphaLight
 
@@ -26,6 +28,16 @@ static void __fastcall UpdateAlphaShape(ObjectClass* pSource)
 
 	if (pAnim && pAnim->OwnerObject)
 		pOwner = pAnim->OwnerObject;
+
+	// Freeze only sources represented by the native building snapshot. The
+	// native AlphaShape already owns the last visible image and world rect;
+	// keep it instead of deleting it or reading hidden power/cloak changes.
+	// No new light is created while the building is completely fogged.
+	const auto pOwnerBuilding = abstract_cast<BuildingClass*, true>(pOwner);
+	const bool snapshotSource = pOwnerBuilding && (pOwner == pSource
+		|| std::find(std::begin(pOwnerBuilding->Anims), std::end(pOwnerBuilding->Anims), pSource) != std::end(pOwnerBuilding->Anims));
+	if (snapshotSource && ScenarioClass::Instance->SpecialFlags.FogOfWar && pOwnerBuilding->IsAllFogged())
+		return;
 
 	const Point2D* tacticalPos = &TacticalClass::Instance->TacticalPos;
 	const Point2D off = { tacticalPos->X - ((pImage->Width + 1) / 2), tacticalPos->Y - ((pImage->Height + 1) / 2) };
@@ -83,11 +95,10 @@ static void __fastcall UpdateAlphaShape(ObjectClass* pSource)
 			inactive = true;
 	}
 
-	// 迷雾中的对象不投射光效：迷雾冻结贴图与迷雾层不消费 alpha 亮度缓冲，
-	// 光效本体不可见，而掩码的变暗部分会被同帧后续绘制的迷雾层消费，在雾面上
-	// 留下暗斑，且每 2 帧注册的大块脏区域会让整片雾区持续无效重绘。
-	// 揭开迷雾后自动恢复。雾中建筑的光效由迷雾冻结绘制分支补画。
-	if (!inactive && ScenarioClass::Instance->SpecialFlags.FogOfWar
+	// Non-snapshot sources keep the fork's existing hidden-light policy.
+	// A partially visible building continues its ordinary native alpha update;
+	// its center alone must not suppress the light before IsAllFogged succeeds.
+	if (!inactive && !snapshotSource && ScenarioClass::Instance->SpecialFlags.FogOfWar
 		&& MapClass::Instance.IsLocationFogged(pSource->GetCoords()))
 	{
 		inactive = true;

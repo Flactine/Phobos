@@ -893,6 +893,19 @@ DEFINE_HOOK(0x4ACD1D, DisplayClass_SpreadFog_RateLimit, 0xC)
 	return 0; // 原版立即递归
 }
 
+// Frozen animation segments bypass AnimClass::DrawIt. At 4D20FA ESI is
+// still the validated AnimTypeClass (WhatAmI == 5 at 4D205C). X is the
+// local at ESP+38, and Y is still in EDX, committed to ESP+3C at 4D2102.
+// Do not use 4D21E4: both animation branches clear ESI before that shared
+// DrawSHP site; the building overlay SHP also reaches it with another type.
+DEFINE_HOOK(0x4D20FA, FoggedObjectClass_DrawFoggedObjects_AnimDrawOffset, 0x6)
+{
+	GET(AnimTypeClass* const, pType, ESI);
+	R->ref_Stack<int>(0x38) += AnimTypeExt::Fetch(pType)->XDrawOffset;
+	R->EDX(static_cast<int>(R->EDX()) + pType->YDrawOffset);
+	return 0; // replay MOV CL,[ESI+35D] once; native code stores the adjusted Y
+}
+
 // 让单位在更新视野的时候不会多更新一次之前的视野
 DEFINE_FUNCTION_JUMP(CALL6, 0x415672, FoggedObjectHelper::TechnoClass_RevealLastSight);
 DEFINE_FUNCTION_JUMP(CALL6, 0x4157F7, FoggedObjectHelper::TechnoClass_RevealLastSight);
@@ -1202,9 +1215,9 @@ DEFINE_HOOK(0x4D1E46, FoggedObjectClass_DrawFoggedObjects_NullBuildingZSHA, 0x7)
 	return 0;
 }
 
-// 迷雾中建筑补画 AlphaImage 光效：暂时移除。迷雾对象的段向量条目结构尚未确认
-// （连续多个基于静态分析的假设均被运行时证伪），需要先用调试器在运行时转储真实
-// 迷雾对象的内存布局，确认条目对象的真实类型与 AlphaImage 的正确来源后再恢复。
+// Fogged building AlphaImage uses the existing native AlphaShape pipeline.
+// Hooks.AlphaImage.cpp preserves the last visible native source while all
+// foundation cells are fogged; do not duplicate its light as a frozen SHP.
 
 // 迷雾中的建筑被摧毁后，移除其冻结在迷雾中的贴图，防止残留
 DEFINE_HOOK(0x441F60, BuildingClass_AfterDestruction_RemoveFoggedImage, 0x5)

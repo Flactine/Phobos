@@ -1,0 +1,31 @@
+param(
+    [Parameter(Mandatory=$true)][string]$Python,
+    [Parameter(Mandatory=$true)][string]$OutDir,
+    [Parameter(Mandatory=$true)][string]$PrivacyChecker,
+    [string]$SourceRoot=''
+)
+$ErrorActionPreference='Stop'
+$stage='prepare'
+try {
+    if(!$SourceRoot){$SourceRoot=Join-Path $PSScriptRoot '../..'}
+    $root=(Resolve-Path -LiteralPath $SourceRoot).Path
+    $null=New-Item -ItemType Directory -Force -Path $OutDir
+    $out=(Resolve-Path -LiteralPath $OutDir).Path
+    & $Python (Join-Path $PSScriptRoot 'prepare.py') --root $root --out $out
+    if($LASTEXITCODE){throw 'Preparation failed'}
+    $stage='compiler'
+    Push-Location -LiteralPath $out
+    try {
+        & cl /nologo /std:c++20 /EHsc /W4 runtime-test.cpp /Fe:runtime-test.exe /Fo:runtime-test.obj /link /DEBUG:NONE > build.log 2>&1
+        if($LASTEXITCODE){throw 'Compile failed'}
+        $stage='binary-privacy'
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $PrivacyChecker -Binary (Join-Path $out 'runtime-test.exe')
+        if($LASTEXITCODE){throw 'Binary privacy failed'}
+        $stage='runtime'
+        & (Join-Path $out 'runtime-test.exe')
+        if($LASTEXITCODE){throw 'Actual-body regression failed'}
+    } finally {Pop-Location}
+} catch {
+    Write-Output ('Fog render regression failed at '+$stage+'; details remain in local test output.')
+    exit 1
+}

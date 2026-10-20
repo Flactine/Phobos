@@ -1,0 +1,7 @@
+# 水下单位SelectBox适配
+
+仅当万花镜公开的Kaleidoscope_GetUnderwaterDepth返回正实际潜深时，GroundShape／GroundLine不再加运动器Shadow_Point的水面投影偏移。主Shape、Offset／GroundOffset、可见方、前后绘制、普通对象和飞机均保留原规则；万花镜或公开接口不存在则回退。调用是可选cdecl语义API，不读取外部扩展布局或把隐形当下潜。DLL在战术绘制前加载，缓存不支持运行中热注入。
+
+在x86开发者终端运行run.ps1，传入Python、OutDir和PrivacyChecker；SourceRoot默认为当前项目。编译实际生产锚点及接口消费者，验证深度1／0与反复上下浮、原地面投影、飞机、缺模块／缺导出及一次性解析。输出与日志保留在指定私有目录，二进制隐私检查失败立即停止。
+
+本回归不执行真实SHP绘制，具体游戏画面、缩放、存读档和联网仍需复测。需要两份DLL配套更新。

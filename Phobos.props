@@ -31,6 +31,7 @@
   <!-- Global -->
   <ItemDefinitionGroup>
     <ClCompile>
+      <AdditionalOptions>/d1trimfile:"$(MSBuildProjectDirectory)" %(AdditionalOptions)</AdditionalOptions>
       <WarningLevel>Level4</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <SDLCheck />
@@ -165,4 +166,7 @@
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
+  <Target Name="CheckBinaryPrivacy" AfterTargets="Build">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)integration\check-binary-privacy.ps1&quot; -Binary &quot;$(TargetPath)&quot;" />
+  </Target>
 </Project>

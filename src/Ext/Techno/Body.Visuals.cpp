@@ -1,7 +1,8 @@
-﻿#include "Body.h"
+#include "Body.h"
 
 #include <DriveLocomotionClass.h>
 #include <ShipLocomotionClass.h>
+#include <Interop/Underwater.h>
 #include <JumpjetLocomotionClass.h>
 
 #include <Ext/Anim/Body.h>
@@ -727,8 +728,11 @@ void TechnoExt::DrawSelectBox(TechnoClass* pThis, const Point2D* pLocation, cons
 		const auto pFoot = static_cast<FootClass*>(pThis);
 		if(pThis->WhatAmI()==AbstractType::Aircraft)
 			point.Y += TacticalClass::AdjustForZ(pFoot->GetHeight());
-		else
+		else if (!UnderwaterInterop::IsPhysicallySubmerged(pThis))
 			point += pFoot->Locomotor->Shadow_Point();
+		// Ground selection decorations follow a submerged body. The ordinary
+		// ship Shadow_Point would cancel its negative height back to the surface.
+		// Shape/Offset/GroundOffset, visibility and draw ordering remain native.
 		if (visible && pGroundShape)
 		{
 			const auto pPalette = pSelectBox->GroundPalette.GetOrDefaultConvert(FileSystem::PALETTE_PAL);

@@ -1,0 +1,7 @@
+# 普通玩家半透明迷雾绘制回归
+
+动画XDrawOffset／YDrawOffset的冻结绘制回调移到4D20FA（ESI仍为经过原生WhatAmI=5验证的AnimType）。旧4D21E4共享DrawSHP前动画分支已清零ESI，且建筑覆盖物路径使用另一种对象。新入口只修正ESP+38的X及EDX中的Y；重放原生MOV CL,[ESI+35D]，由原生代码提交Y。没有修改建筑ActiveAnimX／Y或观战缓存。
+
+建筑及其真实Anims槽中的动画在BuildingClass::IsAllFogged为真时保留已有AlphaShape的最后所见图像和矩形，不补造未见过的光效，不继续读取隐藏电力／隐形变化，不每两帧重建光源。部分可见建筑即使中心格被雾盖住也继续原生更新；其他附着／独立动画和移动对象保留已有隐藏光效策略。所有绘制仍由原生AlphaShape管线完成，不附加一次手工Alpha乘色。原生源对象销毁仍按宿主生命周期移除，未新加存档字段。
+
+run.ps1需要x86开发者终端及Python、OutDir、PrivacyChecker；SourceRoot默认当前项目。prepare.py抽取实际生产函数，覆盖可见／全雾／部分可见、无现成光源、重新揭露、原生动画槽和其他附着对象、隐藏状态读取与重建次数、旧帧率策略及有符号偏移、Y原生提交和寄存器生命周期。构建与替代测试不能证明游戏像素表现已通过实测。
