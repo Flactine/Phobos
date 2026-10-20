@@ -1,6 +1,10 @@
 ﻿#include "Body.h"
 
 #include <Ext/Anim/Body.h>
+#include <ConvertClass.h>
+#include <FileSystem.h>
+#include <Memory.h>
+#include <Surface.h>
 
 TerrainTypeExt::ExtContainer TerrainTypeExt::ExtMap;
 
@@ -54,6 +58,7 @@ void TerrainTypeExt::Serialize(T& Stm)
 		.Process(this->CrumblingSound)
 		.Process(this->AnimationLength)
 		.Process(this->PaletteFile)
+		.Process(this->PaletteRemap)
 		.Process(this->IgnoredByMouse)
 		;
 }
@@ -89,7 +94,13 @@ void TerrainTypeExt::LoadFromINIFile(CCINIClass* const pINI)
 	this->IgnoredByMouse.Read(exINI, pSection, "IgnoredByMouse");
 
 	this->PaletteFile.Read(&CCINIClass::INI_Art, pThis->ImageFile, "Palette");
+	this->PaletteRemap.Read(&CCINIClass::INI_Art, pThis->ImageFile, "PaletteRemap");
 	this->Palette = GeneralUtils::BuildPalette(this->PaletteFile);
+
+	// The generated color schemes replace palette indices 16-31 with shades of the owning house
+	// color. Build a plain converter from the unmodified palette for PaletteRemap=no.
+	if (this->Palette && this->Palette->Count > 0)
+		this->PlainPalette = GameCreate<ConvertClass>(this->Palette->Items[0]->Colors, FileSystem::TEMPERAT_PAL, DSurface::Temp, 0x35, false);
 
 	if (GeneralUtils::IsValidString(this->PaletteFile) && !this->Palette)
 		Debug::Log("[Developer warning] [%s] has Palette=%s set but no palette file was loaded (missing file or wrong filename). Missing palettes cause issues with lighting recalculations.\n", pThis->ImageFile, this->PaletteFile.data());
@@ -100,6 +111,9 @@ void TerrainTypeExt::LoadFromStream(PhobosStreamReader& Stm)
 	ObjectTypeExt::LoadFromStream(Stm);
 	this->Serialize(Stm);
 	this->Palette = GeneralUtils::BuildPalette(this->PaletteFile);
+
+	if (this->Palette && this->Palette->Count > 0)
+		this->PlainPalette = GameCreate<ConvertClass>(this->Palette->Items[0]->Colors, FileSystem::TEMPERAT_PAL, DSurface::Temp, 0x35, false);
 }
 
 void TerrainTypeExt::SaveToStream(PhobosStreamWriter& Stm)

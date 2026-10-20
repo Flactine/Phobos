@@ -1,5 +1,7 @@
 ﻿#include "Body.h"
 
+#include <ConvertClass.h>
+
 DEFINE_HOOK(0x47F71D, CellClass_DrawOverlay_ZAdjust, 0x5)
 {
 	GET(const int, zAdjust, EDI);
@@ -31,13 +33,20 @@ DEFINE_HOOK(0x47F974, CellClass_DrawOverlay_Walls, 0x5)
 	if (wallOwnerIndex >= 0)
 		colorSchemeIndex = HouseClass::Array[wallOwnerIndex]->ColorSchemeIndex;
 
-	LightConvertClass* pConvert = nullptr;
+	ConvertClass* pConvert = nullptr;
 	auto const pTypeExt = OverlayTypeExt::Fetch(pOverlayType);
 
 	if (pTypeExt->Palette)
-		pConvert = pTypeExt->Palette->Items[colorSchemeIndex]->LightConvert;
+	{
+		if (!pTypeExt->PaletteRemap && pTypeExt->PlainPalette)
+			pConvert = pTypeExt->PlainPalette;
+		else
+			pConvert = pTypeExt->Palette->Items[colorSchemeIndex]->LightConvert;
+	}
 	else
+	{
 		pConvert = ColorScheme::Array[colorSchemeIndex]->LightConvert;
+	}
 
 	DSurface::Temp->DrawSHP(pConvert, pShape, pThis->OverlayData, &pLocation, pBounds,
 		BlitterFlags(0x4E00), 0, -2 - zAdjust, ZGradient::Deg90, pThis->Intensity_Normal, 0, 0, 0, 0, 0);

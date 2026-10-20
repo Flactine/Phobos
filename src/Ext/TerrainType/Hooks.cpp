@@ -1,6 +1,7 @@
 ﻿#include "Body.h"
 
 #include <Ext/Rules/Body.h>
+#include <ConvertClass.h>
 
 #include <algorithm>
 
@@ -141,7 +142,11 @@ DEFINE_HOOK(0x71C2BC, TerrainClass_Draw_Palette, 0x6)
 
 	if (pTypeExt->Palette)
 	{
-		R->EDX(pTypeExt->Palette->Items[colorSchemeIndex]->LightConvert);
+		if (!pTypeExt->PaletteRemap && pTypeExt->PlainPalette)
+			R->EDX(pTypeExt->PlainPalette);
+		else
+			R->EDX(pTypeExt->Palette->Items[colorSchemeIndex]->LightConvert);
+
 		R->EBP(pCell->Intensity_Normal);
 	}
 

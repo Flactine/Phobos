@@ -5,6 +5,8 @@
 #include <Utilities/Container.h>
 #include <Utilities/TemplateDef.h>
 
+class ConvertClass;
+
 class OverlayTypeExt final : public ObjectTypeExt
 {
 public:
@@ -25,12 +27,16 @@ public:
 	Valueable<int> ZAdjust;
 	PhobosFixedString<32u> PaletteFile;
 	DynamicVectorClass<ColorScheme*>* Palette; // Intentionally not serialized - rebuilt from the palette file on load.
+	Valueable<bool> PaletteRemap;
+	ConvertClass* PlainPalette; // Intentionally not serialized - rebuilt from the palette file on load. Used when PaletteRemap is false.
 	Valueable<bool> IgnoredByMouse;
 
 	OverlayTypeExt(OverlayTypeClass* OwnerObject) : ObjectTypeExt(OwnerObject)
 		, ZAdjust { 0 }
 		, PaletteFile {}
 		, Palette {}
+		, PaletteRemap { true }
+		, PlainPalette { nullptr }
 		, IgnoredByMouse { false }
 	{ }
 

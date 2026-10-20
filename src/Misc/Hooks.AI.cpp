@@ -1049,15 +1049,25 @@ DEFINE_HOOK(0x4D1B2E, FoggedObjectClass_DrawFoggedObjects_DrawTerrain, 0x6)
 
 		ConvertClass* pPalette = pCell->LightConvert;
 		int intensity = static_cast<int>(pCell->Intensity_Terrain);
-		if (const auto pPalettes = TerrainTypeExt::Fetch(pType)->Palette)
+		auto const pTypeExt = TerrainTypeExt::Fetch(pType);
+
+		if (const auto pPalettes = pTypeExt->Palette)
 		{
-			const int wallOwnerIndex = pCell->WallOwnerIndex;
-			int colorSchemeIndex = HouseClass::CurrentPlayer->ColorSchemeIndex;
+			if (!pTypeExt->PaletteRemap && pTypeExt->PlainPalette)
+			{
+				pPalette = pTypeExt->PlainPalette;
+			}
+			else
+			{
+				const int wallOwnerIndex = pCell->WallOwnerIndex;
+				int colorSchemeIndex = HouseClass::CurrentPlayer->ColorSchemeIndex;
 
-			if (wallOwnerIndex >= 0)
-				colorSchemeIndex = HouseClass::Array[wallOwnerIndex]->ColorSchemeIndex;
+				if (wallOwnerIndex >= 0)
+					colorSchemeIndex = HouseClass::Array[wallOwnerIndex]->ColorSchemeIndex;
 
-			pPalette = pPalettes->Items[colorSchemeIndex]->LightConvert;
+				pPalette = pPalettes->Items[colorSchemeIndex]->LightConvert;
+			}
+
 			intensity = static_cast<int>(pCell->Intensity_Normal);
 
 			if (pType->SpawnsTiberium)
