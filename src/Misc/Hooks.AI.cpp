@@ -655,7 +655,14 @@ DEFINE_HOOK(0x5865E2, MapClass_IsLocationFogged_Reimplement, 0x5)
 	const int extra = (level & 1) ? ((level >> 1) + 1) : (level >> 1);
 	const CellStruct cell { static_cast<short>((pCoords->X >> 8) - extra), static_cast<short>((pCoords->Y >> 8) - extra) };
 
-	R->EAX(!!(MapClass::Instance.GetCellAt(cell)->Flags & CellFlags::Fogged));
+	// 原版判定（0x5865E0）是 Foggedness > 0（-2 完全遮挡 / -1 可见 / 0..48 迷雾帧）。
+	// 之前误改为按 CellFlags::Fogged 标志判定：该标志会被迷雾快照所在格子在每帧
+	// 逻辑中重新置位（0x4D2370 遍历快照列表打标），且只在格子被重新揭示到完全可见
+	// （Foggedness == -1）时才随快照一起清理。两套状态错位后，视觉上已经全亮或半
+	// 透明的格子里，单位绘制循环（0x6D8FDA 无敌我区分调用本判定）会把单位跳过且
+	// 无迷雾快照兜底，表现为单位移动途中概率性消失、停下后视野稳态完成清理才恢复。
+	// 回归原版语义。
+	R->EAX(MapClass::Instance.GetCellAt(cell)->Foggedness > 0);
 	return 0;
 }
 
@@ -955,34 +962,50 @@ DEFINE_HOOK(0x486B21, CellClass_FogCell_FreezeObjects, 0x6)
 	return SkipGameCode;
 }
 
-// 地形对象被迷雾遮蔽时跳过绘制
+// 地形对象仅在格子被完全遮挡（黑幕，Visibility == -2）时跳过真实绘制、由迷雾
+// 快照接管。之前的判定走 IsLocationFogged（等价于 Foggedness > 0），导致半透明
+// 迷雾边缘（Foggedness 0..48）的真实地形也被跳过，而边缘格子的迷雾快照会被揭示
+// 流程清理、Fogged 标志又被重新打上，两头都不绘制，表现为迷雾边缘的地形对象
+// 消失。半透明边缘必须照常绘制真实地形，回归原版表现。
 DEFINE_HOOK(0x6D9313, TacticalClass_DrawObjectsInLayers_SkipTerrainInFog, 0x6)
 {
 	enum { SkipDraw = 0x6D940C };
 
 	GET(const CoordStruct*, pCoord, EAX);
 
-	return (ScenarioClass::Instance->SpecialFlags.FogOfWar && MapClass::Instance.IsLocationFogged(*pCoord)) ? SkipDraw : 0;
+	if (ScenarioClass::Instance->SpecialFlags.FogOfWar)
+	{
+		const int level = pCoord->Z / Unsorted::LevelHeight;
+		const int extra = (level & 1) ? ((level >> 1) + 1) : (level >> 1);
+		const CellStruct cell { static_cast<short>((pCoord->X >> 8) - extra), static_cast<short>((pCoord->Y >> 8) - extra) };
+
+		if (MapClass::Instance.GetCellAt(cell)->Visibility == -2)
+			return SkipDraw;
+	}
+
+	return 0;
 }
 
-// 覆盖物被迷雾遮蔽时跳过绘制
+// 覆盖物（围墙）仅在格子被完全遮挡时跳过真实绘制、由迷雾快照接管，理由同上
 DEFINE_HOOK(0x6D70BC, TacticalClass_DrawCellOverlay_SkipOverlayInFog, 0xA)
 {
 	enum { Draw = 0x6D70C6, SkipDraw = 0x6D71A4 };
 
 	GET(const CellClass*, pCell, EBX);
 
-	return (pCell->OverlayTypeIndex != -1 && (!ScenarioClass::Instance->SpecialFlags.FogOfWar || !(pCell->Flags & CellFlags::Fogged))) ? Draw : SkipDraw;
+	return (pCell->OverlayTypeIndex != -1 && ScenarioClass::Instance->SpecialFlags.FogOfWar
+		&& pCell->Visibility == -2) ? SkipDraw : Draw;
 }
 
-// 弹坑被迷雾遮蔽时跳过绘制
+// 弹坑仅在格子被完全遮挡时跳过真实绘制、由迷雾快照接管，理由同上
 DEFINE_HOOK(0x48049E, CellClass_DrawCellSmudge_SkipSmudgeInFog, 0x6)
 {
 	enum { Draw = 0x4804A4, SkipDraw = 0x4804FB };
 
 	GET(const CellClass*, pThis, ESI);
 
-	return (pThis->SmudgeTypeIndex != -1 && (!ScenarioClass::Instance->SpecialFlags.FogOfWar || !(pThis->Flags & CellFlags::Fogged))) ? Draw : SkipDraw;
+	return (pThis->SmudgeTypeIndex != -1 && ScenarioClass::Instance->SpecialFlags.FogOfWar
+		&& pThis->Visibility == -2) ? SkipDraw : Draw;
 }
 
 // 被击败或是观察者时揭开所有迷雾
