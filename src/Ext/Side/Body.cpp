@@ -18,6 +18,14 @@ void SideExt::Initialize()
 		this->MessageTextColor = 21;
 };
 
+void SideExt::LoadIngameScoreBanners(CCINIClass* pINI)
+{
+	const char* pSection = this->OwnerObject()->ID;
+	INI_EX exINI(pINI);
+	this->IngameScore_WinBanner.Read(exINI, pSection, "IngameScore.WinBanner");
+	this->IngameScore_LoseBanner.Read(exINI, pSection, "IngameScore.LoseBanner");
+}
+
 void SideExt::LoadFromINIFile(CCINIClass* pINI)
 {
 	auto pThis = this->OwnerObject();
@@ -31,8 +39,6 @@ void SideExt::LoadFromINIFile(CCINIClass* pINI)
 	this->Sidebar_RadarOffsetFix.Read(exINI, pSection, "Sidebar.RadarOffsetFix");
 	this->IngameScore_WinTheme = pINI->ReadTheme(pSection, "IngameScore.WinTheme", this->IngameScore_WinTheme);
 	this->IngameScore_LoseTheme = pINI->ReadTheme(pSection, "IngameScore.LoseTheme", this->IngameScore_LoseTheme);
-	this->IngameScore_WinBanner.Read(exINI, pSection, "IngameScore.WinBanner");
-	this->IngameScore_LoseBanner.Read(exINI, pSection, "IngameScore.LoseBanner");
 	this->IngameScore_WinBanner_Position.Read(exINI, pSection, "IngameScore.WinBanner.Position");
 	this->IngameScore_LoseBanner_Position.Read(exINI, pSection, "IngameScore.LoseBanner.Position");
 	this->Sidebar_HarvesterCounter_Offset.Read(exINI, pSection, "Sidebar.HarvesterCounter.Offset");

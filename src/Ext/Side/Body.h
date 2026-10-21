@@ -97,6 +97,7 @@ public:
 
 	virtual ~SideExt() = default;
 
+	void LoadIngameScoreBanners(CCINIClass* pINI);
 	virtual void LoadFromINIFile(CCINIClass* pINI) override;
 	virtual void Initialize() override;
 	virtual void LoadFromStream(PhobosStreamReader& Stm) override;

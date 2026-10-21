@@ -7,6 +7,7 @@
 
 #include <Utilities/SequenceRates.h>
 
+#include <Ext/Side/Body.h>
 #include <Ext/TechnoType/Body.h>
 #include <New/Type/RadTypeClass.h>
 #include <New/Type/ShieldTypeClass.h>
@@ -62,6 +63,15 @@ void RulesExt::LoadBeforeTypeData(RulesClass* pThis, CCINIClass* pINI)
 	LaserTrailTypeClass::LoadFromINIList(&CCINIClass::INI_Art);
 	AttachEffectTypeClass::LoadFromINIList(pINI);
 	BannerTypeClass::LoadFromINIList(pINI);
+
+	// Sides are read at 0x679A10, before BannerTypes exist. Resolve their
+	// banner references here for each INI layer, after loading the types.
+	for (const auto pSide : SideClass::Array)
+	{
+		if (const auto pSideExt = SideExt::TryFetch(pSide))
+			pSideExt->LoadIngameScoreBanners(pINI);
+	}
+
 	InsigniaTypeClass::LoadFromINIList(pINI);
 
 	Data->LoadBeforeTypeData(pThis, pINI);
