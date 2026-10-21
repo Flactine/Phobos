@@ -31,6 +31,10 @@ void SideExt::LoadFromINIFile(CCINIClass* pINI)
 	this->Sidebar_RadarOffsetFix.Read(exINI, pSection, "Sidebar.RadarOffsetFix");
 	this->IngameScore_WinTheme = pINI->ReadTheme(pSection, "IngameScore.WinTheme", this->IngameScore_WinTheme);
 	this->IngameScore_LoseTheme = pINI->ReadTheme(pSection, "IngameScore.LoseTheme", this->IngameScore_LoseTheme);
+	this->IngameScore_WinBanner.Read(exINI, pSection, "IngameScore.WinBanner");
+	this->IngameScore_LoseBanner.Read(exINI, pSection, "IngameScore.LoseBanner");
+	this->IngameScore_WinBanner_Position.Read(exINI, pSection, "IngameScore.WinBanner.Position");
+	this->IngameScore_LoseBanner_Position.Read(exINI, pSection, "IngameScore.LoseBanner.Position");
 	this->Sidebar_HarvesterCounter_Offset.Read(exINI, pSection, "Sidebar.HarvesterCounter.Offset");
 	this->Sidebar_HarvesterCounter_HideMaxValue.Read(exINI, pSection, "Sidebar.HarvesterCounter.HideMaxValue");
 	this->Sidebar_HarvesterCounter_OnlyMaxValue.Read(exINI, pSection, "Sidebar.HarvesterCounter.OnlyMaxValue");
@@ -87,6 +91,10 @@ void SideExt::Serialize(T& Stm)
 		.Process(this->ToolTip_Background_BlurSize)
 		.Process(this->IngameScore_WinTheme)
 		.Process(this->IngameScore_LoseTheme)
+		.Process(this->IngameScore_WinBanner)
+		.Process(this->IngameScore_LoseBanner)
+		.Process(this->IngameScore_WinBanner_Position)
+		.Process(this->IngameScore_LoseBanner_Position)
 		.Process(this->BriefingTheme)
 		.Process(this->MessageTextColor)
 		.Process(this->SuperWeaponSidebar_OnPCX)

@@ -2,6 +2,7 @@
 #include <SideClass.h>
 
 #include <Ext/AbstractType/Body.h>
+#include <New/Type/BannerTypeClass.h>
 #include <Utilities/Container.h>
 #include <Utilities/TemplateDef.h>
 
@@ -27,6 +28,10 @@ public:
 	Nullable<int> Sidebar_RadarOffsetFix;
 	Valueable<int> IngameScore_WinTheme;
 	Valueable<int> IngameScore_LoseTheme;
+	Valueable<BannerTypeClass*> IngameScore_WinBanner;
+	Valueable<BannerTypeClass*> IngameScore_LoseBanner;
+	Valueable<Point2D> IngameScore_WinBanner_Position;
+	Valueable<Point2D> IngameScore_LoseBanner_Position;
 	Valueable<Point2D> Sidebar_HarvesterCounter_Offset;
 	Valueable<bool> Sidebar_HarvesterCounter_HideMaxValue;
 	Valueable<bool> Sidebar_HarvesterCounter_OnlyMaxValue;
@@ -59,6 +64,10 @@ public:
 		, Sidebar_RadarOffsetFix { }
 		, IngameScore_WinTheme { -2 }
 		, IngameScore_LoseTheme { -2 }
+		, IngameScore_WinBanner { nullptr }
+		, IngameScore_LoseBanner { nullptr }
+		, IngameScore_WinBanner_Position { { 50, 50 } }
+		, IngameScore_LoseBanner_Position { { 50, 50 } }
 		, Sidebar_HarvesterCounter_Offset { { 0, 0 } }
 		, Sidebar_HarvesterCounter_HideMaxValue { false }
 		, Sidebar_HarvesterCounter_OnlyMaxValue { false }

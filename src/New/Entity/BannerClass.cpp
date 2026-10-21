@@ -7,6 +7,7 @@
 #include <algorithm>
 
 std::vector<std::unique_ptr<BannerClass>> BannerClass::Array;
+std::unique_ptr<BannerClass> BannerClass::IngameScore;
 
 BannerClass::BannerClass
 (
@@ -14,13 +15,15 @@ BannerClass::BannerClass
 	int id,
 	Point2D position,
 	int variable,
-	bool isGlobalVariable
+	bool isGlobalVariable,
+	bool useVariable
 )
 	: Type(pBannerType)
 	, ID(id)
 	, Position(static_cast<int>(position.X / 100.0 * DSurface::ViewBounds.Width), static_cast<int>(position.Y / 100.0 * DSurface::ViewBounds.Height))
 	, Variable(variable)
 	, IsGlobalVariable(isGlobalVariable)
+	, UseVariable(useVariable)
 {
 	this->Duration = pBannerType->Duration;
 	this->Delay = pBannerType->Delay;
@@ -177,7 +180,7 @@ void BannerClass::RenderCSF(Point2D position)
 	RectangleStruct rect = DSurface::ViewBounds;
 	std::wstring text;
 
-	if (pType->CSF_VariableFormat != BannerNumberType::None)
+	if (this->UseVariable && pType->CSF_VariableFormat != BannerNumberType::None)
 	{
 		const auto& variables = ScenarioExt::Global()->Variables[this->IsGlobalVariable != 0];
 		const auto& it = variables.find(this->Variable);
@@ -269,6 +272,7 @@ bool BannerClass::Serialize(T& Stm)
 		.Process(this->Variable)
 		.Process(this->ShapeFrameIndex)
 		.Process(this->IsGlobalVariable)
+		.Process(this->UseVariable)
 		.Process(this->Duration)
 		.Process(this->Delay)
 		.Success();
@@ -287,12 +291,14 @@ bool BannerClass::Save(PhobosStreamWriter& stm) const
 void BannerClass::Clear()
 {
 	Array.clear();
+	IngameScore.reset();
 }
 
 bool BannerClass::LoadGlobals(PhobosStreamReader& stm)
 {
 	return stm
 		.Process(Array)
+		.Process(IngameScore)
 		.Success();
 }
 
@@ -300,5 +306,6 @@ bool BannerClass::SaveGlobals(PhobosStreamWriter& stm)
 {
 	return stm
 		.Process(Array)
+		.Process(IngameScore)
 		.Success();
 }

@@ -312,6 +312,9 @@ DEFINE_HOOK(0x6D4B25, TacticalClass_Render_Banner, 0x5)
 	for (const auto& pBanner : BannerClass::Array)
 		pBanner->Render();
 
+	if (BannerClass::IngameScore)
+		BannerClass::IngameScore->Render();
+
 	return 0;
 }
 

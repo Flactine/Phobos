@@ -8,6 +8,8 @@ class BannerClass
 {
 public:
 	static std::vector<std::unique_ptr<BannerClass>> Array;
+	// Separate from trigger banners: no trigger ID can replace or delete it.
+	static std::unique_ptr<BannerClass> IngameScore;
 
 	BannerTypeClass* Type {};
 	int ID {};
@@ -15,6 +17,7 @@ public:
 	int Variable {};
 	int ShapeFrameIndex {};
 	bool IsGlobalVariable {};
+	bool UseVariable { true };
 	int Duration { -1 };
 	int Delay { -1 };
 
@@ -26,7 +29,8 @@ public:
 		int id,
 		Point2D position,
 		int variable,
-		bool isGlobalVariable
+		bool isGlobalVariable,
+		bool useVariable = true
 	);
 
 	void Render();

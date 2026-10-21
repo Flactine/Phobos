@@ -30,6 +30,23 @@ IngameScore.LoseTheme=  ; Soundtrack theme ID
 
 ## Battle screen UI/UX
 
+### Victory and defeat banners
+
+- Each side can display a [banner](AI-Scripting-and-Mapping.md#800-802-display-banner) when the current player wins or loses, at the same time as `IngameScore.WinTheme` / `IngameScore.LoseTheme`.
+- The banner must be registered in `[BannerTypes]`. If unset, no banner is displayed.
+- Positions are percentages of the battlefield viewport, just like trigger actions `800` / `801`. The default `50,50` places the banner's anchor at the center; `Horizontal` and `Vertical` on the banner type control alignment.
+- PCX, SHP, CSF, duration, delay and other banner type settings are supported. These banners do not read local or global variables: `CSF.VariableFormat` is ignored and the CSF text is displayed as-is.
+- The result banner is separate from trigger banners, is drawn after them, and cannot be replaced or deleted by actions `800`-`802`. It is saved with the scenario and cleared when the scenario ends. It appears on the battle screen, not the post-game score screen, and does not extend the game's end-of-match delay.
+
+In `rulesmd.ini`:
+```ini
+[SOMESIDE]                            ; Side
+IngameScore.WinBanner=                 ; BannerType ID
+IngameScore.LoseBanner=                ; BannerType ID
+IngameScore.WinBanner.Position=50,50   ; integer pair, viewport percentages
+IngameScore.LoseBanner.Position=50,50  ; integer pair, viewport percentages
+```
+
 ### Allow chat box in singleplayer
 
 - In vanilla, the in-game chat box is disabled in singleplayer scenarios. You can now enable it by setting `[General] -> AllowChatBoxInSinglePlayer` to true.
