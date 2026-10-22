@@ -4,6 +4,7 @@
 
 #include <Ext/Anim/Body.h>
 #include <Ext/BuildingType/Body.h>
+#include <Ext/Foot/Body.h>
 #include <Ext/Infantry/Body.h>
 #include <Ext/TechnoType/Body.h>
 #include <Ext/Unit/Body.h>
@@ -588,7 +589,7 @@ DEFINE_HOOK(0x728FF2, TunnelLocomotionClass_Process_SubterraneanHeight3, 0x6)
 	const int digInSpeed = pTypeExt->DigInSpeed;
 
 	if (digInSpeed > 0)
-		heightOffset = (int)(digInSpeed * TechnoExt::GetCurrentSpeedMultiplier((FootClass*)pLinkedTo));
+		heightOffset = (int)(digInSpeed * FootExt::GetCurrentSpeedMultiplier(static_cast<FootClass*>(pLinkedTo)));
 
 	height -= heightOffset;
 	const int subHeight = pTypeExt->SubterraneanHeight.Get(RulesExt::Global()->SubterraneanHeight);
@@ -651,8 +652,8 @@ DEFINE_HOOK(0x729969, TunnelLocomotionClass_ProcessPreDigOut_DigOutSpeed, 0x6)
 	auto const pTypeExt = TechnoExt::Fetch(pTechno)->TypeExtData;
 	const int digOutSpeed = pTypeExt->DigOutSpeed;
 
-	if (digOutSpeed > 0)
-		speed = (int)(digOutSpeed * TechnoExt::GetCurrentSpeedMultiplier(pTechno));
+	if (digOutSpeed > 0 && abstract_cast<FootClass*>(pTechno))
+		speed = (int)(digOutSpeed * FootExt::GetCurrentSpeedMultiplier(static_cast<FootClass*>(pTechno)));
 
 	R->EAX(speed);
 	return 0;
