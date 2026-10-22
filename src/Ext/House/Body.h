@@ -100,10 +100,6 @@ public:
 
 	std::vector<BuildingClass*> Academies;
 
-	std::vector<UnitClass*> OwnedDeployingUnits;
-	PlacingBuildingStruct Common;
-	PlacingBuildingStruct Combat;
-
 	HouseExt(HouseClass* OwnerObject) : AbstractExt(OwnerObject)
 		, PowerPlantEnhancers {}
 		, OwnedLimboDeliveredBuildings {}
