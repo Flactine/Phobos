@@ -760,15 +760,22 @@ NoBuildAreaOnBuildup=false              ; boolean
 
 - Now you can use `ExtendedWeaponsFactory` to remove the hard coding of `WeaponsFactory` position and direction, and adjust the position of the generated unit and the direction of the unit's exit separately through the original `ExitCoord` and the newly added `WeaponsFactory.Dir`. Similarly, the directions of `Bib` and `NumberImpassableRows` can also be modified through `Bib.Dir` and `NumberImpassableRows.Dir` respectively.
 
+### Building placing and deploying logic enhancement
+
+- In vanilla games, buildings are always cannot placing or deploying on the cells that other infantries or units on. Now this can be changed by setting `ExtendedBuildingPlacing` to true, when you try to place the building on these cells, it will check whether the occupiers can be scatter by yourself (include your own technos and allies technos) and whether there are enough spaces to scatter. If can, it will record which building you are placing and show a preview to you and your allies, then start a timer to record this placement and order the occupiers to leave this building area. When the area is cleared, the building will be truly place down and the production queue will be restored to original state. But when the timer expires or an unexpected situation has occurred which make the building impossible be constructed here anymore, it will stop the action and play "cannot deploy here", then you should re-place or re-deploy the building in a valid space.
+- `AutoUpgrade` controls whether building upgrades can be automatically placed on the correct and earliest built building.
+
 In `rulesmd.ini`:
 ```ini
 [General]
-ExtendedWeaponsFactory=false  ; boolean
+ExtendedWeaponsFactory=false     ; boolean
+ExtendedBuildingPlacing=false    ; boolean
 
-[SOMEBUILDING]                ; BuildingType
-Bib.Dir=2                     ; integer
-NumberImpassableRows.Dir=2    ; integer
-WeaponsFactory.Dir=2          ; integer
+[SOMEBUILDING]                   ; BuildingType
+Bib.Dir=2                        ; integer
+NumberImpassableRows.Dir=2       ; integer
+WeaponsFactory.Dir=2             ; integer
+AutoUpgrade=false                ; boolean
 ```
 
 ```{note}
@@ -4200,7 +4207,7 @@ This is essentially designed to restore multi-turrets in RA1, not to help you ma
 ### Turret Response
 
 - When the vehicle loses its target, you can customize whether to align the turret direction with the vehicle body.
-  - When `Speed=0` or TechnoTypes cells cannot move due to `MovementRestrictedTo`, the default value is no; in other cases, it is yes.
+  - If VehicleType has `Speed=0` or `MovementRestrictedTo` prevents it from moving on the cell, the default value is no; in other cases, it is yes.
 
 In `rulesmd.ini`:
 ```ini

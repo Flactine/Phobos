@@ -1758,6 +1758,28 @@ DEFINE_HOOK(0x4F8DB1, HouseClass_Update_CheckHangUpBuilding, 0x6)
 		}
 	}
 
+	// Mix-ECpack: merged from upstream 13004b56 (AutoUpgrade support).
+	if (pHouse->RecheckTechTree)
+	{
+		if (const auto pFactory = pHouse->GetPrimaryFactory(AbstractType::BuildingType, false, BuildCat::DontCare))
+		{
+			if (pFactory->IsDone())
+			{
+				if (const auto pBuilding = abstract_cast<BuildingClass*>(pFactory->Object))
+					BuildingTypeExt::AutoUpgradeBuilding(pBuilding);
+			}
+		}
+
+		if (const auto pFactory = pHouse->GetPrimaryFactory(AbstractType::BuildingType, false, BuildCat::Combat))
+		{
+			if (pFactory->IsDone())
+			{
+				if (const auto pBuilding = abstract_cast<BuildingClass*>(pFactory->Object))
+					BuildingTypeExt::AutoUpgradeBuilding(pBuilding);
+			}
+		}
+	}
+
 	if (!RulesExt::Global()->ExtendedBuildingPlacing)
 		return 0;
 
@@ -1776,8 +1798,8 @@ DEFINE_HOOK(0x4F8DB1, HouseClass_Update_CheckHangUpBuilding, 0x6)
 				if (pConYard->InLimbo || !pConYard->HasPower || pConYard->Deactivated)
 					continue;
 
-				if (pConYard->CurrentMission == Mission::Selling || pConYard->QueuedMission == Mission::Selling)
-					continue;
+				if (pConYard->CurrentMission == Mission::Construction || pConYard->QueuedMission == Mission::Selling)
+				continue;
 
 				const auto pConYardType = pConYard->Type;
 
@@ -1954,7 +1976,7 @@ DEFINE_HOOK(0x6D504C, TacticalClass_DrawPlacement_DrawPlacingPreview, 0x6)
 */
 DEFINE_HOOK(0x6A8E34, StripClass_Update_AutoBuildBuildings, 0x7)
 {
-	enum { SkipGameCode = 0x6A8F49 };
+	enum { SkipGameCode = 0x6A8F49, SkipSetStripShortCut = 0x6A8E4D };
 
 	GET(BuildingClass* const, pBuilding, ESI);
 
@@ -1962,6 +1984,10 @@ DEFINE_HOOK(0x6A8E34, StripClass_Update_AutoBuildBuildings, 0x7)
 		return SkipGameCode;
 
 	BuildingTypeExt::AutoPlaceBuilding(pBuilding);
+
+	// Mix-ECpack: merged from upstream 13004b56 (AutoUpgrade support).
+	if (RulesExt::Global()->ExtendedBuildingPlacing && BuildingTypeExt::AutoUpgradeBuilding(pBuilding))
+		return SkipSetStripShortCut;
 
 	return 0;
 }

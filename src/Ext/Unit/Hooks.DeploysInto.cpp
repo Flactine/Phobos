@@ -157,8 +157,6 @@ DEFINE_HOOK(0x73FEC1, UnitClass_WhatAction_DeploysIntoDesyncFix, 0x6)
 	return SkipGameCode;
 }
 
-#pragma endregion
-
 DEFINE_HOOK(0x7396D2, UnitClass_TryToDeploy_Transfer, 0x5)
 {
 	GET(UnitClass*, pUnit, EBP);
@@ -172,3 +170,5 @@ DEFINE_HOOK(0x7396D2, UnitClass_TryToDeploy_Transfer, 0x5)
 
 	return 0;
 }
+
+#pragma endregion

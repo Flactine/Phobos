@@ -1365,6 +1365,53 @@ void BuildingTypeExt::Initialize()
 	TechnoTypeExt::Initialize();
 }
 
+// Mix-ECpack: merged from upstream 13004b56 (AutoUpgrade support).
+bool BuildingTypeExt::AutoUpgradeBuilding(BuildingClass* pBuilding)
+{
+	const auto pBuildingType = pBuilding->Type;
+
+	if (!pBuildingType->PowersUpBuilding[0])
+		return false;
+
+	if (const auto pTypeExt = BuildingTypeExt::Fetch(pBuildingType))
+	{
+		if (pTypeExt->AutoUpgrade)
+		{
+			const auto pHouse = pBuilding->Owner;
+			const auto pHouseExt = HouseExt::Fetch(pHouse);
+
+			for (const auto& pOwned : pHouse->Buildings)
+			{
+				if (pOwned->CanUpgradeBuilding(pBuildingType, pHouse))
+				{
+					if (pOwned->IsAlive && pOwned->Health > 0 && pOwned->IsOnMap && !pOwned->InLimbo && pOwned->CurrentMission != Mission::Selling)
+					{
+						const auto cell = pOwned->GetMapCoords();
+
+						if (cell != CellStruct::Empty && !pHouseExt->OwnsLimboDeliveredBuilding(pOwned))
+						{
+							const EventClass event
+							(
+								pHouse->ArrayIndex,
+								EventType::Place,
+								AbstractType::Building,
+								pBuildingType->GetArrayIndex(),
+								pBuildingType->Naval,
+								cell
+							);
+							EventClass::OutList.Add(event);
+
+							return true;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
 // =============================
 // load / save
 
@@ -1382,6 +1429,7 @@ void BuildingTypeExt::LoadFromINIFile(CCINIClass* const pINI)
 
 	this->PowersUp_Owner.Read(exINI, pSection, "PowersUp.Owner");
 	this->PowersUp_Buildings.Read(exINI, pSection, "PowersUp.Buildings");
+	this->AutoUpgrade.Read(exINI, pSection, "AutoUpgrade");
 	this->PowerPlant_DamageFactor.Read(exINI, pSection, "PowerPlant.DamageFactor");
 	this->PowerPlantEnhancer_Buildings.Read(exINI, pSection, "PowerPlantEnhancer.PowerPlants");
 	this->PowerPlantEnhancer_Range.Read(exINI, pSection, "PowerPlantEnhancer.Range");
@@ -1665,6 +1713,7 @@ void BuildingTypeExt::Serialize(T& Stm)
 	Stm
 		.Process(this->PowersUp_Owner)
 		.Process(this->PowersUp_Buildings)
+		.Process(this->AutoUpgrade)
 		.Process(this->PowerPlant_DamageFactor)
 		.Process(this->PowerPlantEnhancer_Buildings)
 		.Process(this->PowerPlantEnhancer_Range)

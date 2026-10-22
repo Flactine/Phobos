@@ -100,6 +100,10 @@ public:
 
 	std::vector<BuildingClass*> Academies;
 
+	std::vector<UnitClass*> OwnedDeployingUnits;
+	PlacingBuildingStruct Common;
+	PlacingBuildingStruct Combat;
+
 	HouseExt(HouseClass* OwnerObject) : AbstractExt(OwnerObject)
 		, PowerPlantEnhancers {}
 		, OwnedLimboDeliveredBuildings {}
@@ -138,8 +142,8 @@ public:
 		, BeaconsPlacedOrder { 0, 0, 0 }
 		, Academies {}
 		, OwnedDeployingUnits {}
-		, Common {}
-		, Combat {}
+		, Common { nullptr, nullptr, 0 }
+		, Combat { nullptr, nullptr, 0 }
 		, LastRefineryBuildFrame { -1 }
 	{ }
 

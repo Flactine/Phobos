@@ -723,6 +723,8 @@ public:
 
 		Valueable<bool> MissileKeepTargetCoord;
 
+		Valueable<bool> ExtendedBuildingPlacing;
+
 		ExtData(RulesClass* OwnerObject) : Extension<RulesClass>(OwnerObject)
 			, Storage_TiberiumIndex { -1 }
 			, HarvesterDumpAmount { 0.0f }
@@ -1373,6 +1375,8 @@ public:
 			, RevealHouses { AffectedHouse::Team }
 
 			, MissileKeepTargetCoord { false }
+
+			, ExtendedBuildingPlacing { false }
 		{ }
 
 		virtual ~ExtData() = default;
