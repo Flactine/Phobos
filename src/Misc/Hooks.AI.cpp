@@ -986,26 +986,40 @@ DEFINE_HOOK(0x6D9313, TacticalClass_DrawObjectsInLayers_SkipTerrainInFog, 0x6)
 	return 0;
 }
 
-// 覆盖物（围墙）仅在格子被完全遮挡时跳过真实绘制、由迷雾快照接管，理由同上
+// 覆盖物（围墙）仅在格子被完全遮挡时跳过真实绘制、由迷雾快照接管，理由同上。
+// 注意原版此处是 cmp [ebx+44h],-1 / je 跳过：没有覆盖物的格子必须照旧跳过，
+// 不能因为不满足迷雾条件就返回 Draw，否则会绕过原版的 -1 检查。
 DEFINE_HOOK(0x6D70BC, TacticalClass_DrawCellOverlay_SkipOverlayInFog, 0xA)
 {
 	enum { Draw = 0x6D70C6, SkipDraw = 0x6D71A4 };
 
 	GET(const CellClass*, pCell, EBX);
 
-	return (pCell->OverlayTypeIndex != -1 && ScenarioClass::Instance->SpecialFlags.FogOfWar
-		&& pCell->Visibility == -2) ? SkipDraw : Draw;
+	if (pCell->OverlayTypeIndex == -1)
+		return SkipDraw;
+
+	if (ScenarioClass::Instance->SpecialFlags.FogOfWar && pCell->Visibility == -2)
+		return SkipDraw;
+
+	return Draw;
 }
 
-// 弹坑仅在格子被完全遮挡时跳过真实绘制、由迷雾快照接管，理由同上
+// 弹坑仅在格子被完全遮挡时跳过真实绘制、由迷雾快照接管，理由同上。
+// 原版此处是 cmp [esi+48h],-1 / je 跳过：没有弹坑的格子必须照旧跳过，否则会拿
+// -1 去索引 SmudgeTypeClass::Array（读到数组前面的垃圾指针）并在绘制时崩溃。
 DEFINE_HOOK(0x48049E, CellClass_DrawCellSmudge_SkipSmudgeInFog, 0x6)
 {
 	enum { Draw = 0x4804A4, SkipDraw = 0x4804FB };
 
 	GET(const CellClass*, pThis, ESI);
 
-	return (pThis->SmudgeTypeIndex != -1 && ScenarioClass::Instance->SpecialFlags.FogOfWar
-		&& pThis->Visibility == -2) ? SkipDraw : Draw;
+	if (pThis->SmudgeTypeIndex == -1)
+		return SkipDraw;
+
+	if (ScenarioClass::Instance->SpecialFlags.FogOfWar && pThis->Visibility == -2)
+		return SkipDraw;
+
+	return Draw;
 }
 
 // 被击败或是观察者时揭开所有迷雾
