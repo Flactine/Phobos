@@ -664,23 +664,6 @@ DEFINE_HOOK(0x5865E2, MapClass_IsLocationFogged_Reimplement, 0x5)
 	return 0;
 }
 
-// 格子重新变为完全可见时，连同迷雾快照一起清掉。快照对象仍挂在全局快照列表里时，
-// 每帧逻辑（0x4D2370）会按“该格仍有快照”把 CellFlags::Fogged 重新打上，于是已经
-// 揭开的格子再次被当成迷雾格：其中的单位被绘制循环隐藏（表现为移动途中凭空消失），
-// 迷雾边缘的地形快照也早已被清掉而真实地形又被跳过。快照会在下次入雾时按当时的
-// 状态重新冻结，所以此处清理不会丢失“最后可见画面”。
-static inline void CleanFoggedCellState(CellClass* pCell)
-{
-	if (!pCell)
-		return;
-
-	if (pCell->Flags & CellFlags::Fogged)
-		pCell->CleanFog();
-
-	if (pCell->FoggedObjects)
-		pCell->ClearFoggedObjects();
-}
-
 // 像黑幕那样自动刷新周围格子的绘制状态，防止边缘出现锯齿
 DEFINE_HOOK(0x4A9CA0, DisplayClass_RevealFogShroud_Reimplement, 0x8)
 {
@@ -744,9 +727,9 @@ DEFINE_HOOK(0x4A9CA0, DisplayClass_RevealFogShroud_Reimplement, 0x8)
 		// EdgeRevealed，而 CleanFog 只在格子“新变为 EdgeRevealed”时触发；此后
 		// FogCell（迷雾扩散/下坡遮挡）会重新给这些格子打上 Fogged 却不更新
 		// Foggedness，形成“逻辑迷雾/视觉无雾”的错位——单位走入后被当作处于
-		// 迷雾中（不绘制且被取消选中）。凡视野更新到完全可见的格子即清理，
-		// 并连同该格的迷雾快照一起丢弃，阻止每帧逻辑重新打上 Fogged。
-		CleanFoggedCellState(pCell);
+		// 迷雾中（不绘制且被取消选中）。凡视野更新到完全可见的格子即清理。
+		if (pCell->Flags & CellFlags::Fogged)
+			pCell->CleanFog();
 	}
 
 	if (shouldRedraw)
@@ -768,7 +751,6 @@ DEFINE_HOOK(0x4A9CA0, DisplayClass_RevealFogShroud_Reimplement, 0x8)
 					{
 						pAdjCell->Flags |= CellFlags::CenterRevealed;
 						TacticalClass::Instance->RegisterCellAsVisible(pAdjCell);
-						CleanFoggedCellState(pAdjCell);
 
 						for (size_t j = 0; j < 8; ++j)
 						{
@@ -780,9 +762,6 @@ DEFINE_HOOK(0x4A9CA0, DisplayClass_RevealFogShroud_Reimplement, 0x8)
 							{
 								pNextAdjCell->Foggedness = nextAdjNewFoggedness;
 								TacticalClass::Instance->RegisterCellAsVisible(pNextAdjCell);
-
-								if (nextAdjNewFoggedness == -1)
-									CleanFoggedCellState(pNextAdjCell);
 							}
 						}
 
@@ -981,11 +960,27 @@ DEFINE_HOOK(0x486B21, CellClass_FogCell_FreezeObjects, 0x6)
 	return SkipGameCode;
 }
 
+// 每帧快照逻辑（0x4D2370）会按“该格存在迷雾快照”重新给格子打上 CellFlags::Fogged，
+// 即使该格早已重新完全可见（Visibility == -1）。标志残留后，已揭开格子里的单位会被
+// 绘制循环当作雾中单位隐藏（表现为移动途中凭空消失），迷雾边缘的真实地形也会被跳过。
+// 这里在两个打标点跳过完全可见的格子；快照本身保留，下次入雾时照常显示，避免动到
+// 快照数据（清理快照会让建筑部件数据与全局绘制列表脱节而崩溃）。
+DEFINE_HOOK_AGAIN(0x4D246E, FoggedObjectClass_MarkFogged_SkipWhenVisible, 0x6)
+DEFINE_HOOK(0x4D2430, FoggedObjectClass_MarkFogged_SkipWhenVisible, 0x6)
+{
+	GET(uintptr_t, flagsAddr, EAX);
+
+	auto const pCell = reinterpret_cast<CellClass*>(flagsAddr - 0x140);
+
+	if (pCell->Visibility == -1)
+		return R->Origin() == 0x4D2430 ? 0x4D2436 : 0x4D2474;
+
+	return 0;
+}
+
 // 地形对象仅在格子被完全遮挡（黑幕，Visibility == -2）时跳过真实绘制、由迷雾
-// 快照接管。之前的判定走 IsLocationFogged（等价于 Foggedness > 0），导致半透明
-// 迷雾边缘（Foggedness 0..48）的真实地形也被跳过，而边缘格子的迷雾快照会被揭示
-// 流程清理、Fogged 标志又被重新打上，两头都不绘制，表现为迷雾边缘的地形对象
-// 消失。半透明边缘必须照常绘制真实地形，回归原版表现。
+// 快照接管。半透明迷雾边缘（Visibility 0..48）必须照常绘制真实地形，否则边缘
+// 的真实地形与快照都不绘制，表现为迷雾边缘的地形对象整体消失。
 DEFINE_HOOK(0x6D9313, TacticalClass_DrawObjectsInLayers_SkipTerrainInFog, 0x6)
 {
 	enum { SkipDraw = 0x6D940C };
