@@ -655,15 +655,30 @@ DEFINE_HOOK(0x5865E2, MapClass_IsLocationFogged_Reimplement, 0x5)
 	const int extra = (level & 1) ? ((level >> 1) + 1) : (level >> 1);
 	const CellStruct cell { static_cast<short>((pCoords->X >> 8) - extra), static_cast<short>((pCoords->Y >> 8) - extra) };
 
-	// 原版判定（0x5865E0）是 Foggedness > 0（-2 完全遮挡 / -1 可见 / 0..48 迷雾帧）。
-	// 之前误改为按 CellFlags::Fogged 标志判定：该标志会被迷雾快照所在格子在每帧
-	// 逻辑中重新置位（0x4D2370 遍历快照列表打标），且只在格子被重新揭示到完全可见
-	// （Foggedness == -1）时才随快照一起清理。两套状态错位后，视觉上已经全亮或半
-	// 透明的格子里，单位绘制循环（0x6D8FDA 无敌我区分调用本判定）会把单位跳过且
-	// 无迷雾快照兜底，表现为单位移动途中概率性消失、停下后视野稳态完成清理才恢复。
-	// 回归原版语义。
-	R->EAX(MapClass::Instance.GetCellAt(cell)->Foggedness > 0);
+	// 原版 0x5865E0 是一个恒返回 false 的空桩（`xor al,al; ret 4`），引擎自己不用它
+	// 隐藏迷雾中的单位；本分支把它改造成真正的迷雾判定后，必须继续用格子上的
+	// Fogged 标志表达“在雾中”。雾中格子的 Foggedness 是 0（fog.shp 帧 0）而不是
+	// 正数，之前改成 Foggedness > 0 会让半透明迷雾下的单位、载具、飞机照常绘制，
+	// 建筑也不再走迷雾快照。
+	R->EAX(!!(MapClass::Instance.GetCellAt(cell)->Flags & CellFlags::Fogged));
 	return 0;
+}
+
+// 格子重新变为完全可见时，连同迷雾快照一起清掉。快照对象仍挂在全局快照列表里时，
+// 每帧逻辑（0x4D2370）会按“该格仍有快照”把 CellFlags::Fogged 重新打上，于是已经
+// 揭开的格子再次被当成迷雾格：其中的单位被绘制循环隐藏（表现为移动途中凭空消失），
+// 迷雾边缘的地形快照也早已被清掉而真实地形又被跳过。快照会在下次入雾时按当时的
+// 状态重新冻结，所以此处清理不会丢失“最后可见画面”。
+static inline void CleanFoggedCellState(CellClass* pCell)
+{
+	if (!pCell)
+		return;
+
+	if (pCell->Flags & CellFlags::Fogged)
+		pCell->CleanFog();
+
+	if (pCell->FoggedObjects)
+		pCell->ClearFoggedObjects();
 }
 
 // 像黑幕那样自动刷新周围格子的绘制状态，防止边缘出现锯齿
@@ -729,9 +744,9 @@ DEFINE_HOOK(0x4A9CA0, DisplayClass_RevealFogShroud_Reimplement, 0x8)
 		// EdgeRevealed，而 CleanFog 只在格子“新变为 EdgeRevealed”时触发；此后
 		// FogCell（迷雾扩散/下坡遮挡）会重新给这些格子打上 Fogged 却不更新
 		// Foggedness，形成“逻辑迷雾/视觉无雾”的错位——单位走入后被当作处于
-		// 迷雾中（不绘制且被取消选中）。凡视野更新到完全可见的格子即清理。
-		if (pCell->Flags & CellFlags::Fogged)
-			pCell->CleanFog();
+		// 迷雾中（不绘制且被取消选中）。凡视野更新到完全可见的格子即清理，
+		// 并连同该格的迷雾快照一起丢弃，阻止每帧逻辑重新打上 Fogged。
+		CleanFoggedCellState(pCell);
 	}
 
 	if (shouldRedraw)
@@ -753,6 +768,7 @@ DEFINE_HOOK(0x4A9CA0, DisplayClass_RevealFogShroud_Reimplement, 0x8)
 					{
 						pAdjCell->Flags |= CellFlags::CenterRevealed;
 						TacticalClass::Instance->RegisterCellAsVisible(pAdjCell);
+						CleanFoggedCellState(pAdjCell);
 
 						for (size_t j = 0; j < 8; ++j)
 						{
@@ -764,6 +780,9 @@ DEFINE_HOOK(0x4A9CA0, DisplayClass_RevealFogShroud_Reimplement, 0x8)
 							{
 								pNextAdjCell->Foggedness = nextAdjNewFoggedness;
 								TacticalClass::Instance->RegisterCellAsVisible(pNextAdjCell);
+
+								if (nextAdjNewFoggedness == -1)
+									CleanFoggedCellState(pNextAdjCell);
 							}
 						}
 
@@ -1089,6 +1108,24 @@ DEFINE_HOOK(0x4D1B2E, FoggedObjectClass_DrawFoggedObjects_DrawTerrain, 0x6)
 
 	if (pImage)
 	{
+		// 帧号来自被冻结对象内部字段，动画地形换帧后可能已经越界。越界会让位块
+		// 传送读到 SHP 帧表之外（yr-simd 等加速器上表现为访问违例），因此按实际
+		// 帧数取模，正常情况（帧号合法）下结果与原值相同。
+		const int frameCount = pImage->Frames;
+
+		if (frameCount <= 0)
+		{
+			R->EAX(pImage);
+			return 0;
+		}
+
+		int drawFrame = frame % frameCount;
+
+		if (drawFrame < 0)
+			drawFrame += frameCount;
+
+		const int shadowFrame = (drawFrame + frameCount / 2) % frameCount;
+
 		auto point = TacticalClass::Instance->CoordsToClient(*pCoord).first;
 		point.X += (DSurface::ViewBounds.X - pBounds->X);
 		point.Y += (DSurface::ViewBounds.Y - pBounds->Y);
@@ -1130,9 +1167,9 @@ DEFINE_HOOK(0x4D1B2E, FoggedObjectClass_DrawFoggedObjects_DrawTerrain, 0x6)
 			point.Y -= 16;
 		}
 
-		DSurface::Temp->DrawSHP(pPalette, pImage, frame, &point, pBounds, BlitterFlags(0x4E00), 0, zAdjust - 4, ZGradient::Deg90, intensity, 0, 0, 0, 0, 0);
+		DSurface::Temp->DrawSHP(pPalette, pImage, drawFrame, &point, pBounds, BlitterFlags(0x4E00), 0, zAdjust - 4, ZGradient::Deg90, intensity, 0, 0, 0, 0, 0);
 		if (Game::bDrawShadow)
-			DSurface::Temp->DrawSHP(pPalette, pImage, frame + (pImage->Frames / 2), &point, pBounds, BlitterFlags(0x4601), 0, zAdjust - 2, ZGradient::Ground, 1000, 0, 0, 0, 0, 0);
+			DSurface::Temp->DrawSHP(pPalette, pImage, shadowFrame, &point, pBounds, BlitterFlags(0x4601), 0, zAdjust - 2, ZGradient::Ground, 1000, 0, 0, 0, 0, 0);
 	}
 
 	return SkipGameCode;
