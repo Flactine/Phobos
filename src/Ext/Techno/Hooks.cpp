@@ -334,6 +334,42 @@ void TechnoExt::InitializeState(TechnoTypeClass* pType)
 	}
 }
 
+// DefaultDisguise 的早期应用点。原版 TechnoClass::Init 里的伪装初始化被
+// CanDisguise 与 PermaDisguise 两道类型标志包住（0x6F41FE / 0x6F4212，
+// 失败直接跳到 0x6F4277），而载具类型通常没有这两项，导致写在载具上的
+// DefaultDisguise 完全不会执行。这里把判断提前到第一道检查之前：只要类型配了
+// DefaultDisguise，步兵与载具都直接建立伪装并跳过原版初始化。
+// 注意：当前只做逻辑层伪装（Disguised / Disguise / 伪装所属方），引擎绘制
+// 载具时不会读取伪装类型，外观仍是真实车体。
+DEFINE_HOOK(0x6F41FE, TechnoClass_Init_DefaultDisguise_Early, 0x6)
+{
+	enum { SkipGameCode = 0x6F4277 };
+
+	GET(TechnoClass*, pThis, ESI);
+
+	auto const pType = pThis->GetTechnoType();
+	auto const absType = pThis->WhatAmI();
+
+	if ((absType == AbstractType::Infantry || absType == AbstractType::Unit))
+	{
+		auto const pTypeExt = TechnoTypeExt::Fetch(pType);
+
+		if (pTypeExt->DefaultDisguise)
+		{
+			pThis->Disguise = pTypeExt->DefaultDisguise;
+			pThis->DisguisedAsHouse = pThis->Owner;
+			pThis->Disguised = true;
+
+			return SkipGameCode;
+		}
+	}
+
+	// 不应用时重新执行被覆盖的 `mov cl, byte [eax+0D2Fh]`，它依赖 EAX = 类型指针。
+	R->EAX(pType);
+
+	return 0;
+}
+
 DEFINE_HOOK(0x6F421C, TechnoClass_Init_DefaultDisguise, 0x6)
 {
 	GET(TechnoClass*, pThis, ESI);
