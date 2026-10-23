@@ -280,6 +280,7 @@
     <ClCompile Include="src\Interop\TechnoExt.cpp" />
     <ClCompile Include="src\Interop\ScenarioExt.cpp" />
     <ClCompile Include="src\Interop\FogOwner.cpp" />
+		<ClCompile Include="src\Interop\FlaresBridge.cpp" />
 		<ClCompile Include="src\Interop\Version.cpp" />
     <ClCompile Include="src\Interop\UIExt\UIExtApi.cpp" />
     <!-- src\Locomotion -->
