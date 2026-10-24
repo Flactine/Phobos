@@ -73,30 +73,10 @@ void RulesExt::LoadAfterTypeData(RulesClass* pThis, CCINIClass* pINI)
 {
 	for (const auto& pTechnoType : TechnoTypeClass::Array)
 	{
-		// WeaponRangeAsSight：取主武器、副武器、WeaponX 与精英武器中最远的射程，
-		// 向上取整换算成格并作为该类型的视野；类型上显式配置的 Sight 更大时保留原值。
-		if (Data->WeaponRangeAsSight && pTechnoType)
-		{
-			int maxRange = 0;
-			const int weaponCount = std::min(pTechnoType->WeaponCount, TechnoTypeClass::MaxWeapons);
-
-			for (int i = 0; i < weaponCount; ++i)
-			{
-				if (auto const pWeapon = pTechnoType->Weapon[i].WeaponType)
-					maxRange = std::max(maxRange, pWeapon->Range);
-
-				if (auto const pEliteWeapon = pTechnoType->EliteWeapon[i].WeaponType)
-					maxRange = std::max(maxRange, pEliteWeapon->Range);
-			}
-
-			if (maxRange > 0)
-			{
-				const int sightFromRange = (maxRange + 0xFF) / 0x100;
-
-				if (sightFromRange > pTechnoType->Sight)
-					pTechnoType->Sight = sightFromRange;
-			}
-		}
+		// ExtraSight：给所有具备视野的单位类型增加指定格数的视野。类型自身
+		// Sight 为 0（无视野）的保持为 0，避免给墙、装饰物之类凭空加出视野。
+		if (Data->ExtraSight > 0 && pTechnoType && pTechnoType->Sight > 0)
+			pTechnoType->Sight += Data->ExtraSight;
 
 		if (const auto pTechnoTypeExt = TechnoTypeExt::TryFetch(pTechnoType))
 		{
@@ -594,7 +574,7 @@ void RulesExt::ExtData::LoadBeforeTypeData(RulesClass* pThis, CCINIClass* pINI)
 
 	this->FogSpreadRate.Read(exINI, GameStrings::General, "FogSpreadRate");
 
-	this->WeaponRangeAsSight.Read(exINI, GameStrings::General, "WeaponRangeAsSight");
+	this->ExtraSight.Read(exINI, GameStrings::General, "ExtraSight");
 
 	this->FogOfWar.Read(exINI, GameStrings::General, "FogOfWar");
 	if (this->FogOfWar.isset())
@@ -1323,7 +1303,7 @@ void RulesExt::ExtData::Serialize(T& Stm)
 		.Process(this->InvisoBlockageFix)
 		.Process(this->SmudgeUpdateTime)
 		.Process(this->FogSpreadRate)
-		.Process(this->WeaponRangeAsSight)
+		.Process(this->ExtraSight)
 		.Process(this->AIAdjacentMax)
 		.Process(this->AIAdjacentMax_Campaign)
 		.Process(this->Parasite_GrappleAnim)
