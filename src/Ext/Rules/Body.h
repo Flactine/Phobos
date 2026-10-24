@@ -486,6 +486,8 @@ public:
 
 		Valueable<double> FogSpreadRate;
 
+		Valueable<bool> WeaponRangeAsSight;
+
 		Nullable<bool> FogOfWar;
 
 		Valueable<int> AIAdjacentMax;
@@ -1145,6 +1147,7 @@ public:
 			, SmudgeUpdateTime { 0 }
 
 			, FogSpreadRate { 0.0 }
+			, WeaponRangeAsSight { false }
 
 			, FogOfWar {}
 
