@@ -63,18 +63,30 @@ namespace FogSpreadHelper
 	const ScenarioClass* LastScenario = nullptr;
 	int LastSpreadFrame = 0;
 
-	// 迷雾蔓延：原版在单位视野收缩的那一帧就把格子从“完全可见”直接改成迷雾/黑幕，
-	// 整片区域一次性变暗。FogSpreadRate>0 时该步骤进入待处理队列，每隔
-	// FogSpreadRate 分钟才整体推进一次（分钟换算为帧与原版 BuildupTime 一致，
-	// 1 分钟 = 900 帧），推进时重新走一遍原版视野更新，最终状态与原版一致。
-	// 只延迟“完全可见 → 非可见”这一步；已经在迷雾中的格子继续加深属于同一次
-	// 恢复过程的收尾，不再单独排队。
-	bool ShouldDefer(const CellClass* pCell, char newFoggedness)
+	// 本次变化是否让格子更被迷雾覆盖。Foggedness：-1 完全可见、0..48 半透明迷雾、
+	// -2 完全遮挡。可见 -> 非可见、以及半透明迷雾加深为完全遮挡都算；朝 -1 或
+	// 由 -2 变亮都是“揭开”，立即生效。
+	bool IsFogging(char from, char to)
 	{
-		return !Processing
-			&& RulesExt::Global()->FogSpreadRate > 0.0
-			&& pCell->Foggedness == -1
-			&& newFoggedness != -1;
+		if (to == -1)
+			return false;
+
+		if (from == -1)
+			return true;
+
+		return to == -2 && from != -2;
+	}
+
+	bool ShouldDeferCell(const CellClass* pCell, char newFoggedness)
+	{
+		return RulesExt::Global()->FogSpreadRate > 0.0
+			&& IsFogging(pCell->Foggedness, newFoggedness);
+	}
+
+	// 视野更新入口：排队推进时（Processing）需要真正落地，所以绕过延迟。
+	bool ShouldDeferReveal(const CellClass* pCell, char newFoggedness)
+	{
+		return !Processing && ShouldDeferCell(pCell, newFoggedness);
 	}
 
 	void Enqueue(const CellStruct& coords, HouseClass* pHouse)
@@ -770,7 +782,7 @@ DEFINE_HOOK(0x4A9CA0, DisplayClass_RevealFogShroud_Reimplement, 0x8)
 
 	// FogSpreadRate：迷雾恢复不立即落地。视觉上先保持完全可见，把格子放进待处理
 	// 队列，由 ProcessQueue 按间隔重新执行本函数。
-	if (FogSpreadHelper::ShouldDefer(pCell, newFoggedness))
+	if (FogSpreadHelper::ShouldDeferReveal(pCell, newFoggedness))
 	{
 		FogSpreadHelper::Enqueue(*pCellStruct, pHouse);
 		newVisibility = pCell->Visibility;
@@ -831,7 +843,7 @@ DEFINE_HOOK(0x4A9CA0, DisplayClass_RevealFogShroud_Reimplement, 0x8)
 							const auto pNextAdjCell = pThis->GetCellAt(nextAdjCell);
 
 							const char nextAdjNewFoggedness = TacticalClass::Instance->GetOcclusion(nextAdjCell, true);
-							if (FogSpreadHelper::ShouldDefer(pNextAdjCell, nextAdjNewFoggedness))
+							if (FogSpreadHelper::ShouldDeferCell(pNextAdjCell, nextAdjNewFoggedness))
 							{
 								FogSpreadHelper::Enqueue(nextAdjCell, pHouse);
 							}
@@ -851,7 +863,7 @@ DEFINE_HOOK(0x4A9CA0, DisplayClass_RevealFogShroud_Reimplement, 0x8)
 					{
 						if (adjNewFoggedness >= 0 && adjNewFoggedness != pAdjCell->Foggedness)
 						{
-							if (FogSpreadHelper::ShouldDefer(pAdjCell, adjNewFoggedness))
+							if (FogSpreadHelper::ShouldDeferCell(pAdjCell, adjNewFoggedness))
 							{
 								FogSpreadHelper::Enqueue(adjCell, pHouse);
 							}
@@ -866,7 +878,7 @@ DEFINE_HOOK(0x4A9CA0, DisplayClass_RevealFogShroud_Reimplement, 0x8)
 					}
 				}
 
-				if (FogSpreadHelper::ShouldDefer(pAdjCell, adjNewFoggedness))
+				if (FogSpreadHelper::ShouldDeferCell(pAdjCell, adjNewFoggedness))
 				{
 					FogSpreadHelper::Enqueue(adjCell, pHouse);
 					continue;
@@ -887,7 +899,38 @@ DEFINE_HOOK(0x4A9CA0, DisplayClass_RevealFogShroud_Reimplement, 0x8)
 	return SkipGameCode;
 }
 
-// 让部分无效更新不更新实际视野
+// FogSpreadRate 的真正拦截点：DisplayClass::MapCellFoggedness（0x4A9DD0）负责把
+// 迷雾状态逐格落地——写入 [cell+0x121] 的 Foggedness，并在同一帧内把结果直接
+// 写到 8 个邻格。只延迟 RevealFogShroud 覆盖不到它（引擎也会直接调用它），所以
+// 这里在函数入口判断：需要延迟时整段跳过该格并改为入队，等间隔到点后由
+// ProcessQueue 重新执行视野更新。
+// 0x4A9DDA 位于 sub esp,20h / push ebx / push ebp / push edi 之后，栈布局与正常
+// 出口一致，可直接跳到函数收尾 0x4AA03B（pop edi / mov al,bl / pop ebp /
+// pop ebx / add esp,20h / ret 8）。收尾里的 mov al,bl 会覆盖返回值，先把 EBX
+// 置 1 让本次调用返回 true。
+DEFINE_HOOK(0x4A9DDA, DisplayClass_MapCellFoggedness_Defer, 0x2)
+{
+	enum { ReturnFromFunction = 0x4AA03B };
+
+	GET(DisplayClass*, pThis, ECX);
+	GET_STACK(CellStruct*, pCoords, STACK_OFFSET(0x0, 0x30));
+	GET_STACK(HouseClass*, pHouse, STACK_OFFSET(0x0, 0x34));
+
+	auto const pCell = pThis->GetCellAt(*pCoords);
+
+	// 未启用时不做额外计算，保持原版开销
+	if (RulesExt::Global()->FogSpreadRate > 0.0
+		&& FogSpreadHelper::ShouldDeferCell(pCell, TacticalClass::Instance->GetOcclusion(*pCoords, true)))
+	{
+		FogSpreadHelper::Enqueue(*pCoords, pHouse);
+		R->EBX(1);
+		return ReturnFromFunction;
+	}
+
+	R->ECX(pThis);
+	return 0;
+}
+
 DEFINE_HOOK(0x4A9DF1, DisplayClass_MapCellFoggedness_NoUpdate, 0x6)
 {
 	enum { SkipGameCode = 0x4A9DFE };
