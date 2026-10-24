@@ -660,7 +660,34 @@ DEFINE_HOOK(0x5865E2, MapClass_IsLocationFogged_Reimplement, 0x5)
 	// Fogged 标志表达“在雾中”。雾中格子的 Foggedness 是 0（fog.shp 帧 0）而不是
 	// 正数，之前改成 Foggedness > 0 会让半透明迷雾下的单位、载具、飞机照常绘制，
 	// 建筑也不再走迷雾快照。
-	R->EAX(!!(MapClass::Instance.GetCellAt(cell)->Flags & CellFlags::Fogged));
+	auto const pCell = MapClass::Instance.GetCellAt(cell);
+
+	if (!(pCell->Flags & CellFlags::Fogged))
+	{
+		R->EAX(0);
+		return 0;
+	}
+
+	// 单位站在半透明迷雾与已知视野的交界处时，自身锚点格仍在雾里，但图像会压到
+	// 已揭示的格子上；此时整个隐藏会导致“贴边就消失”。只要自身或周围一圈格子中
+	// 有一格是完全可见（Foggedness == -1），就照常绘制。离视野更远的单位仍然隐藏，
+	// 保持迷雾遮蔽效果。
+	if (pCell->Foggedness == -1)
+	{
+		R->EAX(0);
+		return 0;
+	}
+
+	for (auto const& offset : Unsorted::AdjacentCell)
+	{
+		if (MapClass::Instance.GetCellAt(cell + offset)->Foggedness == -1)
+		{
+			R->EAX(0);
+			return 0;
+		}
+	}
+
+	R->EAX(1);
 	return 0;
 }
 
@@ -972,7 +999,7 @@ DEFINE_HOOK(0x4D2430, FoggedObjectClass_MarkFogged_SkipWhenVisible, 0x6)
 
 	auto const pCell = reinterpret_cast<CellClass*>(flagsAddr - 0x140);
 
-	if (pCell->Visibility == -1)
+	if (pCell->Foggedness == -1)
 		return R->Origin() == 0x4D2430 ? 0x4D2436 : 0x4D2474;
 
 	return 0;
