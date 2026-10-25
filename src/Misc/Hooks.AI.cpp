@@ -568,6 +568,66 @@ namespace FoggedObjectHelper
 	};
 	static_assert(sizeof(FoggedObjectFields) == 0x50u);
 
+	// 全局绘制数组（0x8B3CC0 元素 / 0x8B3CC4 数量）的元素：{类别排序键, 冻结对象}
+	struct FoggedDrawRecord
+	{
+		int SortKey;
+		FoggedObjectClass* Object;
+	};
+	static_assert(sizeof(FoggedDrawRecord) == 0x8u);
+
+	// FoggedObjectClass 内部 DynamicVectorClass<DrawRecord>（位于 +0x5C）。元素是虚表
+	// 指针可被虚拟调用的类型对象（每项 0x10 字节），这里只需要判空与数量上限
+	struct FoggedObjectDrawRecords
+	{
+		void* VTable;                  // +0x5C
+		void* Items;                   // +0x60
+		int Capacity;                  // +0x64
+		bool IsInitialized;            // +0x68
+		bool IsAllocated;              // +0x69
+		char _padding[2];              // +0x6A
+		int Count;                     // +0x6C
+		int CapacityIncrement;         // +0x70
+	};
+	static_assert(sizeof(FoggedObjectDrawRecords) == 0x18u);
+
+	// FoggedObjectClass 主虚表地址（0x7E8B38，前四个虚表指针依次为主表/
+	// INoticeSource/INoticeSink/IRTTITypeInfo，与 0x4D255E 处的构造一致）
+	constexpr uintptr_t FoggedObjectClassVTable = 0x7E8B38u;
+
+	// 析构函数（0x4D1650）在 0x4D1722 处按“格子坐标 + FoggedType”算出的排序键做一次
+	// 二分查找来摘除绘制记录。同一格、同一类别存在多个冻结对象时排序键相同，可能摘错
+	// 记录，结果是被销毁的对象仍留在绘制数组（0x8B3CC0）里：下一帧 0x4D1890 会拿已
+	// 释放的对象去绘制——析构里 +0x60（DrawRecord 向量）已被释放置空，+0x6C（数量）
+	// 却保持原值，建筑分支 0x4D1C6B 便以空指针为基址读取而崩溃。
+	// 这里在析构释放向量之前按对象指针精确清理一遍，保证数组里不残留指向自己的记录。
+	void RemoveDrawRecordsOf(const FoggedObjectClass* pObject)
+	{
+		auto const pItems = *reinterpret_cast<FoggedDrawRecord**>(0x8B3CC0);
+		auto const pCount = reinterpret_cast<int*>(0x8B3CC4);
+
+		if (!pItems || *pCount <= 0)
+			return;
+
+		const int count = *pCount;
+		int write = 0;
+
+		for (int read = 0; read < count; ++read)
+		{
+			if (pItems[read].Object != pObject)
+				pItems[write++] = pItems[read];
+		}
+
+		if (write == count)
+			return;
+
+		for (int i = write; i < count; ++i)
+			pItems[i] = FoggedDrawRecord { 0, nullptr };
+
+		*pCount = write;
+		*reinterpret_cast<char*>(0x8B3CCC) = 0; // 数组已变动，下次使用时重新排序
+	}
+
 	// 游戏内部的坐标→格子换算（与 0x486CA7 处的实现一致）
 	CellStruct CoordToCell(const CoordStruct& coords)
 	{
@@ -1130,6 +1190,48 @@ DEFINE_FUNCTION_JUMP(CALL, 0x5FC4B1, FoggedObjectHelper::OverlayClassFake::Overl
 DEFINE_FUNCTION_JUMP(CALL, 0x5FD2D2, FoggedObjectHelper::OverlayClassFake::OverlayClass_Unlimbo_CheckFog);
 DEFINE_FUNCTION_JUMP(CALL, 0x6B4B14, FoggedObjectHelper::SmudgeClassFake::SmudgeClass_Unlimbo_CheckFog);
 DEFINE_FUNCTION_JUMP(CALL, 0x71D012, FoggedObjectHelper::TerrainClassFake::TerrainClass_Unlimbo_CheckFog);
+
+// FoggedObjectClass 析构（0x4D1650）里摘除全局绘制记录的二分查找可能摘错对象
+// （见 FoggedObjectHelper::RemoveDrawRecordsOf 的说明）。这里在向量被释放之前，
+// 按对象指针把绘制数组里指向自己的记录全部清掉。
+DEFINE_HOOK(0x4D1855, FoggedObjectClass_Destructor_CleanDrawRecords, 0x7)
+{
+	GET(FoggedObjectClass*, pThis, EDI);
+
+	FoggedObjectHelper::RemoveDrawRecordsOf(pThis);
+
+	return 0; // 重新执行被覆盖的 mov [edi+5Ch], 7E8BC0h
+}
+
+// 绘制迷雾快照（0x4D1890）逐条遍历全局绘制数组（0x8B3CC0 / 数量 0x8B3CC4），
+// 取出的记录里只有 {类别排序键, FoggedObjectClass*}。记录是在冻结对象析构时
+// （0x4D1650，二分查找后移位摘除）才被移除的，一旦对象先被销毁而记录残留，
+// 后续每帧都会拿已释放的对象去绘制：
+//   - 建筑分支 0x4D1C6B 直接以 [对象+0x60]（内部 DrawRecord 向量）为基址读
+//     [基址 + i*0x10]，向量已释放时即访问违例（EAX=数量、ECX=NULL、EBP=0）；
+//   - 地形分支 0x4D1AD9 同样按 [对象+0x60] 取值，空指针直接崩。
+// 这里在取出记录后校验对象身份（主虚表必须是 FoggedObjectClass）与向量一致性，
+// 不一致就跳过该记录，交给下一帧；正常对象的检查恒通过，不改变绘制结果。
+DEFINE_HOOK(0x4D18F3, FoggedObjectClass_DrawFoggedObjects_SkipInvalidRecord, 0x7)
+{
+	enum { SkipThisObject = 0x4D2311 };
+
+	GET(FoggedObjectHelper::FoggedDrawRecord*, pRecords, ECX);
+	GET(int, index, ESI);
+
+	auto const pObject = pRecords[index].Object;
+
+	if (!pObject || reinterpret_cast<uintptr_t*>(pObject)[0] != FoggedObjectHelper::FoggedObjectClassVTable)
+		return SkipThisObject;
+
+	auto const pVector = reinterpret_cast<FoggedObjectHelper::FoggedObjectDrawRecords*>(
+		reinterpret_cast<char*>(pObject) + 0x5C);
+
+	if (!pVector->Items || pVector->Count > pVector->Capacity)
+		return SkipThisObject;
+
+	return 0;
+}
 
 DEFINE_HOOK(0x4D1B2E, FoggedObjectClass_DrawFoggedObjects_DrawTerrain, 0x6)
 {
