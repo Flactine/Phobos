@@ -573,8 +573,6 @@ void RulesExt::ExtData::LoadBeforeTypeData(RulesClass* pThis, CCINIClass* pINI)
 
 	this->SmudgeUpdateTime.Read(exINI, GameStrings::AudioVisual, "SmudgeUpdateTime");
 
-	this->FogSpreadRate.Read(exINI, GameStrings::General, "FogSpreadRate");
-
 	this->ExtraSight.Read(exINI, GameStrings::General, "ExtraSight");
 
 	this->FogOfWar.Read(exINI, GameStrings::General, "FogOfWar");
@@ -1304,7 +1302,6 @@ void RulesExt::ExtData::Serialize(T& Stm)
 		.Process(this->Decloak_OnCrushing)
 		.Process(this->InvisoBlockageFix)
 		.Process(this->SmudgeUpdateTime)
-		.Process(this->FogSpreadRate)
 		.Process(this->ExtraSight)
 		.Process(this->AIAdjacentMax)
 		.Process(this->AIAdjacentMax_Campaign)
