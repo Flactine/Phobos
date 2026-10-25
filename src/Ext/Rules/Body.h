@@ -706,6 +706,9 @@ public:
 		Valueable<bool> KeepAlive_Aircraft;
 		Valueable<bool> KeepAlive_Buildings;
 		Valueable<bool> KeepAlive_Defenses;
+
+		Valueable<bool> ExtendedHealthBarDrawing;
+
 		Valueable<bool> AutoTarget_InsignificantWhenMindControlled;
 
 		ValueableVector<AnimTypeClass*> CloakAnims;
@@ -1360,6 +1363,8 @@ public:
 			, KeepAlive_Aircraft { false }
 			, KeepAlive_Buildings { true }
 			, KeepAlive_Defenses { true }
+
+			, ExtendedHealthBarDrawing { false }
 
 			, AutoTarget_InsignificantWhenMindControlled { true }
 

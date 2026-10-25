@@ -825,6 +825,8 @@ void RulesExt::ExtData::LoadBeforeTypeData(RulesClass* pThis, CCINIClass* pINI)
 	this->KeepAlive_Buildings.Read(exINI, GameStrings::General, "KeepAlive.Buildings");
 	this->KeepAlive_Defenses.Read(exINI, GameStrings::General, "KeepAlive.Defenses");
 
+	this->ExtendedHealthBarDrawing.Read(exINI, GameStrings::AudioVisual, "ExtendedHealthBarDrawing");
+
 	this->AutoTarget_InsignificantWhenMindControlled.Read(exINI, GameStrings::CombatDamage, "AutoTarget.InsignificantWhenMindControlled");
 
 	// Section AITargetTypes
@@ -1463,6 +1465,7 @@ void RulesExt::ExtData::Serialize(T& Stm)
 		.Process(this->KeepAlive_Aircraft)
 		.Process(this->KeepAlive_Buildings)
 		.Process(this->KeepAlive_Defenses)
+		.Process(this->ExtendedHealthBarDrawing)
 		.Process(this->AutoTarget_InsignificantWhenMindControlled)
 		.Process(this->CloakAnims)
 		.Process(this->DecloakAnims)
