@@ -180,7 +180,7 @@ DEFINE_EXPORT(HRESULT, Phobos_Fog_SpreadFog, int cx, int cy)
 {
 	// engine-native fog refill cascade: FogCell per cell (sets Fogged,
 	// freezes buildings into FoggedObjects, hides units) + recursive
-	// spread honoring FogSpreadRate via the fork's rate-limit queue
+	// spread; pacing comes from the vanilla FogRate timer in LogicClass
 	CellStruct cs = { static_cast<short>(cx), static_cast<short>(cy) };
 	reinterpret_cast<void (__thiscall*)(void*, const CellStruct&)>(0x4ACC50)(
 		reinterpret_cast<void*>(0x87F7E8), cs);

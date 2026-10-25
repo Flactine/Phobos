@@ -485,8 +485,6 @@ public:
 
 		Valueable<int> SmudgeUpdateTime;
 
-		Valueable<double> FogSpreadRate;
-
 		Valueable<int> ExtraSight;
 
 		Nullable<bool> FogOfWar;
@@ -1148,7 +1146,6 @@ public:
 
 			, SmudgeUpdateTime { 0 }
 
-			, FogSpreadRate { 0.0 }
 			, ExtraSight { 0 }
 
 			, FogOfWar {}
