@@ -32,7 +32,11 @@ DEFINE_EXPORT(HRESULT, Phobos_Fog_SetOwner, HouseClass* pHouse)
 				al &= ~(static_cast<unsigned int>(AltCellFlags::Mapped) | static_cast<unsigned int>(AltCellFlags::NoFog));
 				c->AltFlags = static_cast<AltCellFlags>(al);
 				c->Visibility = -2;
-				c->Foggedness = 0;
+				// 必须与原版 CellClass 构造一致（0x47BC5B 处两字段都初始化为 0xFE）：
+				// FogCell（0x4ACC50）的递归级联只在“邻居无揭示标志且 Foggedness != -2”
+				// 时向邻居递归。这里若写 0，首次迷雾级联会递归穿透全图（深度可达 26 万层），
+				// 栈溢出——表现为游戏卡死后瞬间闪退且无任何崩溃报告。写 -2 让级联立即终止。
+				c->Foggedness = -2;
 				c->ShroudCounter = 0;
 				reinterpret_cast<void (__thiscall*)(CellClass*)>(0x486C50)(c); // ClearFoggedObjects
 			}
@@ -180,7 +184,8 @@ DEFINE_EXPORT(HRESULT, Phobos_Fog_SpreadFog, int cx, int cy)
 {
 	// engine-native fog refill cascade: FogCell per cell (sets Fogged,
 	// freezes buildings into FoggedObjects, hides units) + recursive
-	// spread; pacing comes from the vanilla FogRate timer in LogicClass
+	// spread into neighbors that are unrevealed and not yet fully fogged;
+	// pacing comes from the vanilla FogRate timer in LogicClass
 	CellStruct cs = { static_cast<short>(cx), static_cast<short>(cy) };
 	reinterpret_cast<void (__thiscall*)(void*, const CellStruct&)>(0x4ACC50)(
 		reinterpret_cast<void*>(0x87F7E8), cs);
