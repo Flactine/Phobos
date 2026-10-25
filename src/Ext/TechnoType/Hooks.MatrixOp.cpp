@@ -346,7 +346,16 @@ DEFINE_HOOK(0x73CCE1, UnitClass_DrawSHP_TurretOffest, 0x6)
 
 	Matrix3D mtx = Matrix3D::GetIdentity();
 	mtx.RotateZ(static_cast<float>(pThis->PrimaryFacing.Current().GetRadian<32>()));
-	TechnoTypeExt::ApplyTurretOffset(pThis->Type, &mtx);
+
+	TechnoTypeClass* pDrawType = pThis->Type;
+
+	if (pThis->IsDisguised() && !pThis->IsClearlyVisibleTo(HouseClass::CurrentPlayer))
+	{
+		if (const auto pDisguise = TechnoTypeExt::GetTechnoType(pThis->GetDisguise(true)))
+			pDrawType = pDisguise;
+	}
+
+	TechnoTypeExt::ApplyTurretOffset(pDrawType, &mtx);
 
 	const double turretRad = pThis->TurretFacing().GetRadian<32>();
 	const double bodyRad = pThis->PrimaryFacing.Current().GetRadian<32>();

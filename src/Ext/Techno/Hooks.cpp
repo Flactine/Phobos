@@ -338,9 +338,10 @@ void TechnoExt::InitializeState(TechnoTypeClass* pType)
 // CanDisguise 与 PermaDisguise 两道类型标志包住（0x6F41FE / 0x6F4212，
 // 失败直接跳到 0x6F4277），而载具类型通常没有这两项，导致写在载具上的
 // DefaultDisguise 完全不会执行。这里把判断提前到第一道检查之前：只要类型配了
-// DefaultDisguise，步兵与载具都直接建立伪装并跳过原版初始化。
-// 注意：当前只做逻辑层伪装（Disguised / Disguise / 伪装所属方），引擎绘制
-// 载具时不会读取伪装类型，外观仍是真实车体。
+// 匹配自身类别的 DefaultDisguise，步兵与载具都直接建立伪装并跳过原版初始化
+// （类别不匹配时回落到原版检查，避免混用步兵/载具伪装破坏绘制层）。
+// 注意：不依赖 PermaDisguise 也能初始伪装；但伪装的自动恢复（清伪装后重建）
+// 仍只对 PermaDisguise 载具生效（见 Hooks.Misc.cpp 的 0x746720 钩子）。
 DEFINE_HOOK(0x6F41FE, TechnoClass_Init_DefaultDisguise_Early, 0x6)
 {
 	enum { SkipGameCode = 0x6F4277 };
@@ -350,13 +351,16 @@ DEFINE_HOOK(0x6F41FE, TechnoClass_Init_DefaultDisguise_Early, 0x6)
 	auto const pType = pThis->GetTechnoType();
 	auto const absType = pThis->WhatAmI();
 
-	if ((absType == AbstractType::Infantry || absType == AbstractType::Unit))
+	if (absType == AbstractType::Infantry || absType == AbstractType::Unit)
 	{
 		auto const pTypeExt = TechnoTypeExt::Fetch(pType);
+		auto const pDefault = pTypeExt->DefaultDisguise;
+		const bool matches = pDefault
+			&& pDefault->WhatAmI() == (absType == AbstractType::Infantry ? AbstractType::InfantryType : AbstractType::UnitType);
 
-		if (pTypeExt->DefaultDisguise)
+		if (matches)
 		{
-			pThis->Disguise = pTypeExt->DefaultDisguise;
+			pThis->Disguise = pDefault;
 			pThis->DisguisedAsHouse = pThis->Owner;
 			pThis->Disguised = true;
 
@@ -372,23 +376,39 @@ DEFINE_HOOK(0x6F41FE, TechnoClass_Init_DefaultDisguise_Early, 0x6)
 
 DEFINE_HOOK(0x6F421C, TechnoClass_Init_DefaultDisguise, 0x6)
 {
-	GET(TechnoClass*, pThis, ESI);
+	enum { DefaultDisguise = 0x6F4277 };
 
-	auto const pTypeExt = TechnoTypeExt::Fetch(pThis->GetTechnoType());
-	const auto absType = pThis->WhatAmI();
-	// mirage is not here yet
-	if ((absType == AbstractType::Infantry || absType == AbstractType::Unit) && pTypeExt->DefaultDisguise)
+	GET(TechnoClass*, pThis, ESI);
+	const auto pTypeExt = TechnoTypeExt::ExtMap.Find(pThis->GetTechnoType());
+	const auto pDefault = pTypeExt->DefaultDisguise.Get();
+
+	switch (pThis->WhatAmI())
 	{
-		if (pTypeExt->DefaultDisguise)
+	case AbstractType::Unit:
+		if (pDefault && pDefault->WhatAmI() == AbstractType::UnitType)
 		{
-			pThis->Disguise = pTypeExt->DefaultDisguise;
+			pThis->Disguise = pDefault;
 			pThis->DisguisedAsHouse = pThis->Owner;
 			pThis->Disguised = true;
-			return 0x6F4277;
+			return DefaultDisguise;
 		}
-	}
 
-	pThis->Disguised = false;
+		break;
+
+	case AbstractType::Infantry:
+		if (pDefault && pDefault->WhatAmI() == AbstractType::InfantryType)
+		{
+			pThis->Disguise = pDefault;
+			pThis->DisguisedAsHouse = pThis->Owner;
+			pThis->Disguised = true;
+			return DefaultDisguise;
+		}
+
+		break;
+
+	default:
+		break;
+	}
 
 	return 0;
 }
@@ -1051,31 +1071,22 @@ DEFINE_HOOK(0x70D703, TechnoClass_FireDeathWeapon_UseGlobalDeathWeaponDamage, 0x
 
 #pragma region UnitDisguise
 
-DEFINE_HOOK(0x7466D8, UnitClass_DisguiseAs_DisguiseUnit, 0xA)
+DEFINE_HOOK(0x7466D8, UnitClass_DisguiseAs_DisguiseAsVehicle, 0xA)
 {
-	enum { ret = 0x746712 };
+	enum { SkipGameCode = 0x746712 };
 
 	GET(UnitClass*, pThis, EDI);
 	GET(UnitClass*, pTarget, ESI);
+	const bool targetDisguised = pTarget->IsDisguised();
 
+	pThis->Disguise = targetDisguised ? pTarget->GetDisguise(true) : pTarget->Type;
+	pThis->DisguisedAsHouse = targetDisguised ? pTarget->GetDisguiseHouse(true) : pTarget->Owner;
 	pThis->TechnoClass::DisguiseAs(pTarget);
 
-	if (pTarget->IsDisguised())
-	{
-		pThis->Disguise = pTarget->GetDisguise(true);
-		pThis->DisguisedAsHouse = pTarget->GetDisguiseHouse(true);
-	}
-	else
-	{
-		pThis->Disguise = pTarget->Type;
-		pThis->DisguisedAsHouse = pTarget->GetOwningHouse();
-	}
+	if (const auto pDisguise = abstract_cast<UnitTypeClass*>(pThis->Disguise))
+		pThis->BarrelFacing.SetCurrent(DirStruct(0x4000 - (pDisguise->FireAngle << 8)));
 
-	// Use the same FireAngle
-	if (pThis->Disguise && pThis->Disguise->WhatAmI() == AbstractType::UnitType)
-		pThis->BarrelFacing.SetCurrent(pTarget->BarrelFacing.Current());
-
-	return ret;
+	return SkipGameCode;
 }
 
 namespace RotatingContext
