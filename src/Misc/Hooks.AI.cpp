@@ -1,3 +1,5 @@
+#include <vector>
+
 #include <New/Entity/AttachmentClass.h>
 
 #include <Ext/Anim/Body.h>
@@ -52,18 +54,24 @@ namespace FogSpreadHelper
 	const ScenarioClass* LastScenario = nullptr;
 	int LastAdvanceFrame = -1;
 
-	// 本次变化是否让格子更被迷雾覆盖。Foggedness：-1 完全可见、0..48 半透明迷雾、
-	// -2 完全遮挡。可见 -> 非可见、以及半透明迷雾加深为完全遮挡都算；朝 -1 或
-	// 由 -2 变亮都是“揭开”，立即生效。
+	// 迷雾浓度排序：-1（完全可见） < 0..48（半透明迷雾，越接近 48 越浓） < -2（完全遮蔽）。
+	// Foggedness 是字节，-2 读出来是 0xFE，不能直接比较大小，这里统一换算成浓度。
+	int FogSeverity(char value)
+	{
+		if (value == -1)
+			return -1;
+
+		if (value == -2)
+			return 0x100;
+
+		return static_cast<unsigned char>(value);
+	}
+
+	// 本次变化是否让格子更暗。可见 -> 迷雾、迷雾由浅变浓、以及迷雾加深为完全遮蔽
+	// 都算；只有朝向更亮的变化（揭开迷雾）才不拦。
 	bool IsFogging(char from, char to)
 	{
-		if (to == -1)
-			return false;
-
-		if (from == -1)
-			return true;
-
-		return to == -2 && from != -2;
+		return FogSeverity(to) > FogSeverity(from);
 	}
 
 	// 原版迷雾前沿每次只向内推进一层。FogSpreadRate>0 时只每隔 FogSpreadRate 分钟
@@ -106,6 +114,69 @@ namespace FogSpreadHelper
 	{
 		return IsFogging(pCell->Foggedness, newFoggedness) && !AllowAdvanceThisFrame();
 	}
+
+	// 被拦下的入雾推进。MapClass::RevealArea 只在视野变化时才会遍历格子，被跳过的
+	// 格子未必会再被调用一次，所以把请求记下来，到放行帧由 LogicClass::AI 末尾补做，
+	// 补做后若仍未达到目标浓度就继续排队，从而保证“每次只推进一层”。
+	struct PendingFogStep
+	{
+		CellStruct Cell;
+		HouseClass* House;
+		bool Increase;
+	};
+
+	std::vector<PendingFogStep> PendingSteps;
+
+	void Enqueue(const CellStruct& cell, HouseClass* pHouse, bool increase)
+	{
+		if (PendingSteps.size() >= 1024)
+			return;
+
+		for (auto const& step : PendingSteps)
+		{
+			if (step.Cell == cell && step.House == pHouse)
+				return;
+		}
+
+		PendingSteps.push_back(PendingFogStep { cell, pHouse, increase });
+	}
+
+	void ProcessPendingSteps()
+	{
+		if (PendingSteps.empty())
+			return;
+
+		// 对局切换后队列里的格子/作战方都已失效，直接丢弃（AllowAdvanceThisFrame 也会重置计时）
+		if (ScenarioClass::Instance != LastScenario)
+		{
+			PendingSteps.clear();
+			return;
+		}
+
+		if (!AllowAdvanceThisFrame())
+			return;
+
+		auto const batch = std::move(PendingSteps);
+		PendingSteps.clear();
+
+		for (auto const& step : batch)
+		{
+			auto pCell = MapClass::Instance.TryGetCellAt(step.Cell);
+
+			if (!pCell || !IsFogging(pCell->Foggedness, TacticalClass::Instance->GetOcclusion(step.Cell, true)))
+				continue;
+
+			CellStruct cell = step.Cell;
+
+			reinterpret_cast<bool(__thiscall*)(DisplayClass*, CellStruct&, HouseClass*, bool)>(0x4A9CA0)
+				(reinterpret_cast<DisplayClass*>(&MapClass::Instance), cell, step.House, step.Increase);
+
+			pCell = MapClass::Instance.TryGetCellAt(step.Cell);
+
+			if (pCell && IsFogging(pCell->Foggedness, TacticalClass::Instance->GetOcclusion(step.Cell, true)))
+				Enqueue(step.Cell, step.House, step.Increase);
+		}
+	}
 }
 
 #pragma endregion
@@ -114,6 +185,9 @@ DEFINE_HOOK(0x55B6B3, LogicClass_AI_After, 0x5)
 {
 	for (auto const& attachment : AttachmentClass::Array)
 		attachment->AI();
+
+	// FogSpreadRate：补做本帧之前被拦下的入雾推进（逻辑帧末尾，位置安全）
+	FogSpreadHelper::ProcessPendingSteps();
 
 	const int time = RulesExt::Global()->SmudgeUpdateTime;
 
@@ -771,6 +845,20 @@ DEFINE_HOOK(0x4A9CA0, DisplayClass_RevealFogShroud_Reimplement, 0x8)
 	const auto pCell = pThis->GetCellAt(*pCellStruct);
 	const auto flags = pCell->Flags;
 
+	// FogSpreadRate：入雾推进必须整体延后，而且要在改动任何状态之前就判定。
+	// Foggedness 并不是这个函数唯一写的东西——它由格子与邻格的 CenterRevealed/
+	// EdgeRevealed 标志经 TacticalClass::GetOcclusion 推出，绘制前
+	// DisplayClass::MapCell（0x4A9890）还会按标志重算一次；若只延后写 Foggedness
+	// 而照常设置标志、增减遮蔽计数，其它路径重算时迷雾依旧会在同一帧铺开，
+	// 表现为 FogSpreadRate 完全无效。所以未到放行帧时整个函数跳过：标志、计数、
+	// 可见度都不动，格子保持原状，引擎后续的视野更新会再试一次。
+	if (RulesExt::Global()->FogSpreadRate > 0.0
+		&& FogSpreadHelper::ShouldDeferCell(pCell, TacticalClass::Instance->GetOcclusion(*pCellStruct, true)))
+	{
+		FogSpreadHelper::Enqueue(*pCellStruct, pHouse, increase);
+		return SkipGameCode;
+	}
+
 		// Kaleidoscope fog-owner diag (first 8 owner-matching calls)
 	static int s_kdiag = 0;
 	if (PhobosFogOwner && pHouse == PhobosFogOwner && s_kdiag < 8)
@@ -795,13 +883,6 @@ DEFINE_HOOK(0x4A9CA0, DisplayClass_RevealFogShroud_Reimplement, 0x8)
 
 	char newVisibility = TacticalClass::Instance->GetOcclusion(*pCellStruct, false);
 	char newFoggedness = TacticalClass::Instance->GetOcclusion(*pCellStruct, true);
-
-	// FogSpreadRate：未到放行帧时，入雾变化不落地，格子保持当前可见状态。
-	if (FogSpreadHelper::ShouldDeferCell(pCell, newFoggedness))
-	{
-		newVisibility = pCell->Visibility;
-		newFoggedness = pCell->Foggedness;
-	}
 
 	if (newVisibility != pCell->Visibility)
 	{
