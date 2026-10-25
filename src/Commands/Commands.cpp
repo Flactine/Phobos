@@ -122,9 +122,13 @@ DEFINE_HOOK(0x533066, CommandClassCallback_Register, 0x6)
 		MakeCommand<DistributionModeHoldDownCommandClass>();
 	}
 
-	if (Phobos::Config::DevelopmentCommands)
+	if (Phobos::Config::DamageNumbersCommand)
 	{
 		MakeCommand<DamageDisplayCommandClass>();
+	}
+
+	if (Phobos::Config::DevelopmentCommands)
+	{
 		MakeCommand<SaveVariablesToFileCommandClass>();
 		MakeCommand<ObjectInfoCommandClass>();
 		MakeCommand<FrameByFrameCommandClass>();

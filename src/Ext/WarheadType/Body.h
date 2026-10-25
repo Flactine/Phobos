@@ -242,6 +242,8 @@ public:
 
 	Valueable<bool> CanKill;
 
+	Valueable<bool> HiddenDamageNumbers;
+
 	Valueable<bool> SuppressWreckage;
 	Valueable<bool> ActivateWreckage;
 
@@ -602,6 +604,8 @@ public:
 		, DamageAreaInvoker {}
 
 		, CanKill { true }
+
+		, HiddenDamageNumbers { false }
 
 		, KillWeapon {}
 		, KillWeapon_OnFirer {}

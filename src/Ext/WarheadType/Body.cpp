@@ -394,6 +394,8 @@ void WarheadTypeExt::LoadFromINIFile(CCINIClass* const pINI)
 
 	this->CanKill.Read(exINI, pSection, "CanKill");
 
+	this->HiddenDamageNumbers.Read(exINI, pSection, "HiddenDamageNumbers");
+
 	this->KillWeapon.Read(exINI, pSection, "KillWeapon");
 	this->KillWeapon_OnFirer.Read(exINI, pSection, "KillWeapon.OnFirer");
 	if (exINI.ReadString(pSection, "KillWeapon.AffectsHouses") > 0)
@@ -860,6 +862,8 @@ void WarheadTypeExt::Serialize(T& Stm)
 		.Process(this->AutoTargetWalls)
 
 		.Process(this->CanKill)
+
+		.Process(this->HiddenDamageNumbers)
 
 		.Process(this->ReverseEngineer)
 
