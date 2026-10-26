@@ -142,8 +142,8 @@ DEFINE_HOOK(0x71C2BC, TerrainClass_Draw_Palette, 0x6)
 
 	if (pTypeExt->Palette)
 	{
-		if (!pTypeExt->PaletteRemap && pTypeExt->PlainPalette)
-			R->EDX(pTypeExt->PlainPalette);
+		if (auto const pPlain = pTypeExt->GetPlainPalette())
+			R->EDX(pPlain);
 		else
 			R->EDX(pTypeExt->Palette->Items[colorSchemeIndex]->LightConvert);
 

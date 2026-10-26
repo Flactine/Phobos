@@ -1218,9 +1218,9 @@ DEFINE_HOOK(0x4D1B2E, FoggedObjectClass_DrawFoggedObjects_DrawTerrain, 0x6)
 
 		if (const auto pPalettes = pTypeExt->Palette)
 		{
-			if (!pTypeExt->PaletteRemap && pTypeExt->PlainPalette)
+			if (auto const pPlain = pTypeExt->GetPlainPalette())
 			{
-				pPalette = pTypeExt->PlainPalette;
+				pPalette = pPlain;
 			}
 			else
 			{

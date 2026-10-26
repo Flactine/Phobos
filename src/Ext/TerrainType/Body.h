@@ -24,6 +24,11 @@ public:
 		return static_cast<TerrainTypeClass*>(this->GetAttachedObject());
 	}
 
+	// Lazy accessor for the unremapped converter: PlainPalette is neither serialized
+	// nor rebuilt during load, because the load window may run before the drawing
+	// surfaces are back. Created on first use from the palette file instead.
+	ConvertClass* GetPlainPalette();
+
 	Valueable<int> SpawnsTiberium_Type;
 	Valueable<int> SpawnsTiberium_Range;
 	Valueable<PartialVector2D<int>> SpawnsTiberium_GrowthStage;

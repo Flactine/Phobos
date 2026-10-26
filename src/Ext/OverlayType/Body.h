@@ -24,6 +24,11 @@ public:
 		return static_cast<OverlayTypeClass*>(this->GetAttachedObject());
 	}
 
+	// Lazy accessor for the unremapped converter: PlainPalette is neither serialized
+	// nor rebuilt during load, because the load window may run before the drawing
+	// surfaces are back. Created on first use from the palette file instead.
+	ConvertClass* GetPlainPalette();
+
 	Valueable<int> ZAdjust;
 	PhobosFixedString<32u> PaletteFile;
 	DynamicVectorClass<ColorScheme*>* Palette; // Intentionally not serialized - rebuilt from the palette file on load.

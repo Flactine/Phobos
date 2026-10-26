@@ -38,8 +38,8 @@ DEFINE_HOOK(0x47F974, CellClass_DrawOverlay_Walls, 0x5)
 
 	if (pTypeExt->Palette)
 	{
-		if (!pTypeExt->PaletteRemap && pTypeExt->PlainPalette)
-			pConvert = pTypeExt->PlainPalette;
+		if (auto const pPlain = pTypeExt->GetPlainPalette())
+			pConvert = pPlain;
 		else
 			pConvert = pTypeExt->Palette->Items[colorSchemeIndex]->LightConvert;
 	}

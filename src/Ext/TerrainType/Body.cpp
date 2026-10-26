@@ -99,13 +99,22 @@ void TerrainTypeExt::LoadFromINIFile(CCINIClass* const pINI)
 	this->PaletteRemap.Read(exArtINI, pThis->ImageFile, "PaletteRemap");
 	this->Palette = GeneralUtils::BuildPalette(this->PaletteFile);
 
+	// PlainPalette is created lazily in GetPlainPalette on first use.
 	// The generated color schemes replace palette indices 16-31 with shades of the owning house
-	// color. Build a plain converter from the unmodified palette for PaletteRemap=no.
-	if (this->Palette && this->Palette->Count > 0)
-		this->PlainPalette = GameCreate<ConvertClass>(this->Palette->Items[0]->Colors, FileSystem::TEMPERAT_PAL, DSurface::Temp, 0x35, false);
-
+	// color; the lazy converter is built from the unmodified palette for PaletteRemap=no.
 	if (GeneralUtils::IsValidString(this->PaletteFile) && !this->Palette)
 		Debug::Log("[Developer warning] [%s] has Palette=%s set but no palette file was loaded (missing file or wrong filename). Missing palettes cause issues with lighting recalculations.\n", pThis->ImageFile, this->PaletteFile.data());
+}
+
+ConvertClass* TerrainTypeExt::GetPlainPalette()
+{
+	// 不序列化、也不在读档反序列化时立即重建：加载窗口内 DSurface::Temp 可能尚未
+	// 重建（悬垂指针），此时构造 ConvertClass 会在查询 surface 像素格式时崩溃
+	// （2026.10.26 迷雾存档读档崩溃）。惰性到首次绘制使用时创建，彼时 Temp 必然有效。
+	if (!this->PaletteRemap && !this->PlainPalette && this->Palette && this->Palette->Count > 0)
+		this->PlainPalette = GameCreate<ConvertClass>(this->Palette->Items[0]->Colors, FileSystem::TEMPERAT_PAL, DSurface::Temp, 0x35, false);
+
+	return this->PlainPalette;
 }
 
 void TerrainTypeExt::LoadFromStream(PhobosStreamReader& Stm)
@@ -113,9 +122,6 @@ void TerrainTypeExt::LoadFromStream(PhobosStreamReader& Stm)
 	ObjectTypeExt::LoadFromStream(Stm);
 	this->Serialize(Stm);
 	this->Palette = GeneralUtils::BuildPalette(this->PaletteFile);
-
-	if (this->Palette && this->Palette->Count > 0)
-		this->PlainPalette = GameCreate<ConvertClass>(this->Palette->Items[0]->Colors, FileSystem::TEMPERAT_PAL, DSurface::Temp, 0x35, false);
 }
 
 void TerrainTypeExt::SaveToStream(PhobosStreamWriter& Stm)
