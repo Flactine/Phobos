@@ -918,6 +918,40 @@ DEFINE_HOOK(0x4D20FA, FoggedObjectClass_DrawFoggedObjects_AnimDrawOffset, 0x6)
 	return 0; // replay MOV CL,[ESI+35D] once; native code stores the adjusted Y
 }
 
+// 半透明迷雾中的建筑快照默认取所有者阵营色盘（0x4D1C9B-0x4D1CB0 算出后于本处
+// 写入帧槽 [esp+0x14]，三处 CC_Draw_Shape 均从该槽取色盘）。但正常绘制经
+// TechnoClass::GetDrawer(0x705D70) 会优先使用 TechnoTypeClass+0xDF0 缓存的自定义
+// 色盘方案族（Art 图像节 Palette= 标签：LoadFromINI 0x71582B 将文件名读入 +0xDD0，
+// 0x717820 经 ColorScheme::GeneratePalette 生成方案族缓存到 +0xDF0）。快照绘制
+// 漏掉该分支，导致带自定义 Palette 的建筑快照错误显示为阵营默认色盘。
+// 此处按 GetDrawer 的自定义分支补齐：FoggedObject+0x28 为快照所有者 House，
+// 其 +0x16054 为 ColorScheme 索引；方案族 +4 为方案指针数组，方案 +0x30C 为
+// 其 LightConvert。TerrainPalette 分支在钩点之前已处理，优先级与正常绘制一致。
+DEFINE_HOOK(0x4D1EE5, FoggedObjectClass_DrawFoggedObjects_BuildingCustomPalette, 0x8)
+{
+	GET(BuildingTypeClass*, pType, ESI);
+	GET(void*, pFogged, EBX);
+
+	const auto pSchemes = *reinterpret_cast<DynamicVectorClass<ColorScheme*>**>(
+		reinterpret_cast<char*>(pType) + 0xDF0);
+
+	if (pSchemes)
+	{
+		const auto pOwner = *reinterpret_cast<HouseClass**>(reinterpret_cast<char*>(pFogged) + 0x28);
+		const auto index = *reinterpret_cast<int*>(reinterpret_cast<char*>(pOwner) + 0x16054);
+		const auto pScheme = pSchemes->GetItem(index);
+		const auto pConvert = *reinterpret_cast<void**>(reinterpret_cast<char*>(pScheme) + 0x30C);
+
+		if (pConvert)
+		{
+			R->ref_Stack<int>(0x14) = reinterpret_cast<int>(pConvert);
+			return 0x4D1EED; // 跳过原版默认色盘写入，否则原指令会覆盖本钩子的写入
+		}
+	}
+
+	return 0; // 重放原指令：无自定义色盘时维持原版阵营默认色盘
+}
+
 // 让单位在更新视野的时候不会多更新一次之前的视野
 DEFINE_FUNCTION_JUMP(CALL6, 0x415672, FoggedObjectHelper::TechnoClass_RevealLastSight);
 DEFINE_FUNCTION_JUMP(CALL6, 0x4157F7, FoggedObjectHelper::TechnoClass_RevealLastSight);
