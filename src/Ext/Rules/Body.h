@@ -487,10 +487,6 @@ public:
 
 		Valueable<int> ExtraSight;
 
-		// 迷雾扩散的渐变帧数：变浓方向的 Foggedness 在此帧数内逐帧逼近目标，
-		// 0 为禁用（保持原版的瞬时变化）。
-		Valueable<int> FogFadeFrames;
-
 		Nullable<bool> FogOfWar;
 
 		Valueable<int> AIAdjacentMax;
@@ -1154,8 +1150,6 @@ public:
 			, SmudgeUpdateTime { 0 }
 
 			, ExtraSight { 0 }
-
-			, FogFadeFrames { 8 }
 
 			, FogOfWar {}
 

@@ -52,14 +52,6 @@ public:
 	int SmudgeGenerate { 0 };
 	BlitterFlags SmudgeState { BlitterFlags::None };
 
-	// 瞬态的雾浓度渐变状态（不序列化）：迷雾扩散时 Foggedness 不再一步到位，
-	// 而是在 FogFadeFrames 帧内逐帧逼近 FogFadeTarget；绘制侧 Foggedness 即
-	// fog.shp 帧号，因此只需推进本值即可获得渐变。FogFadeTarget 的 -3 为
-	// "无渐变"哨兵（避开 -2/-1/0..48 的合法值域）。
-	int FogFadeStart { 0 };
-	char FogFadeFrom { 0 };
-	char FogFadeTarget { -3 };
-
 	CellExt(CellClass* OwnerObject) : AbstractExt(OwnerObject)
 	{ }
 
