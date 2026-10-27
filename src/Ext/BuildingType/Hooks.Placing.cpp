@@ -1930,14 +1930,16 @@ DEFINE_HOOK(0x6D504C, TacticalClass_DrawPlacement_DrawPlacingPreview, 0x6)
 		DSurface::Temp->DrawSHP(pColor->LightConvert, pImage, imageFrame, &point, &rect, blitFlags, 0, 0, ZGradient::Ground, 1000, 0, nullptr, 0, 0, 0);
 	};
 
+	// 玩家自己的放置预览只画一次（放在阵营循环外，否则每个盟友都会重复画一遍），
+	// 色盘按观察者自己（pPlayer）的配色方案取
+	if (const auto pType = abstract_cast<BuildingTypeClass*>(pDisplay->CurrentBuildingTypeCopy))
+		drawImage(pType, pPlayer, (pDisplay->CurrentFoundationCopy_TopLeftOffset + pDisplay->CurrentFoundationCopy_CenterCell));
+
 	for (const auto& pHouse : HouseClass::Array)
 	{
 		if (pPlayer->IsObserver() || pHouse->IsAlliedWith(pPlayer))
 		{
 			const auto pHouseExt = HouseExt::Fetch(pHouse);
-
-			if (const auto pType = abstract_cast<BuildingTypeClass*>(pDisplay->CurrentBuildingTypeCopy))
-				drawImage(pType, pHouse, (pDisplay->CurrentFoundationCopy_TopLeftOffset + pDisplay->CurrentFoundationCopy_CenterCell));
 
 			if (const auto pType = pHouseExt->Common.DrawType)
 				drawImage(pType, pHouse, pHouseExt->Common.TopLeft);
