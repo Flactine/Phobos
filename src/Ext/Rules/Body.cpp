@@ -575,6 +575,8 @@ void RulesExt::ExtData::LoadBeforeTypeData(RulesClass* pThis, CCINIClass* pINI)
 
 	this->ExtraSight.Read(exINI, GameStrings::General, "ExtraSight");
 
+	this->FogFadeFrames.Read(exINI, GameStrings::General, "FogFadeFrames");
+
 	this->FogOfWar.Read(exINI, GameStrings::General, "FogOfWar");
 	if (this->FogOfWar.isset())
 		RulesClass::Instance->FogOfWar = this->FogOfWar.Get();
@@ -1305,6 +1307,7 @@ void RulesExt::ExtData::Serialize(T& Stm)
 		.Process(this->InvisoBlockageFix)
 		.Process(this->SmudgeUpdateTime)
 		.Process(this->ExtraSight)
+		.Process(this->FogFadeFrames)
 		.Process(this->AIAdjacentMax)
 		.Process(this->AIAdjacentMax_Campaign)
 		.Process(this->Parasite_GrappleAnim)

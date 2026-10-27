@@ -45,6 +45,95 @@ static bool __forceinline ShouldRemoveSmudgeCell(const int index, const int time
 	return true;
 }
 
+// Foggedness 即 fog.shp/shroud.shp 的绘制帧号（-2 完全遮挡 → 帧15，-1 可见 →
+// 帧0，0..48 为雾浓度帧），因此迷雾渐变只需让 Foggedness 逐帧逼近目标值，
+// 绘制管线（0x4801F0 每格读取该字段选帧）无需任何改动。此处在 Logic 阶段
+// 推进所有正在渐变的格子并注册重绘。
+static int FogDensityRank(const char foggedness)
+{
+	return foggedness == -2 ? 49 : (foggedness < 0 ? 0 : foggedness);
+}
+
+static void UpdateFadingFogCells(const int current)
+{
+	auto& fading = ScenarioExt::Global()->FadingFogCells;
+
+	if (fading.empty())
+		return;
+
+	for (auto it = fading.begin(); it != fading.end(); )
+	{
+		const auto index = *it;
+		const auto pCell = MapClass::Instance.TryGetCellAt(CellStruct { static_cast<short>(index & 511), static_cast<short>(index >> 9) });
+
+		if (!pCell)
+		{
+			it = fading.erase(it);
+			continue;
+		}
+
+		const auto pCellExt = CellExt::Fetch(pCell);
+		const char target = pCellExt->FogFadeTarget;
+
+		// 目标已无效，或格子被揭示（Foggedness 已淡于渐变起点）——放弃渐变
+		if (target == -3 || FogDensityRank(target) <= FogDensityRank(pCell->Foggedness))
+		{
+			pCellExt->FogFadeTarget = -3;
+			it = fading.erase(it);
+			continue;
+		}
+
+		const int elapsed = current - pCellExt->FogFadeStart;
+
+		if (elapsed >= RulesExt::Global()->FogFadeFrames)
+		{
+			pCell->Foggedness = target;
+			pCellExt->FogFadeTarget = -3;
+			TacticalClass::Instance->RegisterCellAsVisible(pCell);
+			it = fading.erase(it);
+			continue;
+		}
+
+		const int from = FogDensityRank(pCellExt->FogFadeFrom);
+		const int to = FogDensityRank(target);
+		const int rank = from + (to - from) * elapsed / RulesExt::Global()->FogFadeFrames;
+
+		// 中间 rank 0..48 即 fog.shp 帧；只有收尾才写 -2（shroud 全黑无中间帧）
+		pCell->Foggedness = static_cast<char>(rank);
+		TacticalClass::Instance->RegisterCellAsVisible(pCell);
+		++it;
+	}
+}
+
+// 迷雾变浓时的渐变启动：返回 true 表示已进入渐变（调用方应跳过直接赋值）。
+// 揭示方向（变淡/清除）保持原版瞬时行为，因为完全可见的判定（== -1）驱动
+// CenterRevealed 等引擎逻辑，不能延迟。
+static bool StartFogFade(CellClass* pCell, const char newFoggedness)
+{
+	const int frames = RulesExt::Global()->FogFadeFrames;
+
+	if (frames <= 0)
+		return false;
+
+	const int from = FogDensityRank(pCell->Foggedness);
+	const int to = FogDensityRank(newFoggedness);
+
+	if (to <= from) // 只对变浓方向渐变
+		return false;
+
+	const auto pCellExt = CellExt::Fetch(pCell);
+
+	if (pCellExt->FogFadeTarget == -3)
+		ScenarioExt::Global()->FadingFogCells.push_back(MapClass::GetCellIndex(pCell->MapCoords));
+
+	// 渐变中再次变浓时，从当前位置继续逼近新目标
+	pCellExt->FogFadeStart = Unsorted::CurrentFrame;
+	pCellExt->FogFadeFrom = static_cast<char>(from);
+	pCellExt->FogFadeTarget = newFoggedness;
+
+	return true;
+}
+
 DEFINE_HOOK(0x55B6B3, LogicClass_AI_After, 0x5)
 {
 	for (auto const& attachment : AttachmentClass::Array)
@@ -69,6 +158,8 @@ DEFINE_HOOK(0x55B6B3, LogicClass_AI_After, 0x5)
 			}
 		}
 	}
+
+	UpdateFadingFogCells(Unsorted::CurrentFrame);
 
 	return 0;
 }
@@ -743,7 +834,10 @@ DEFINE_HOOK(0x4A9CA0, DisplayClass_RevealFogShroud_Reimplement, 0x8)
 	if (newFoggedness != pCell->Foggedness)
 	{
 		shouldRedraw = true;
-		pCell->Foggedness = newFoggedness;
+
+		// 变浓方向进入渐变（逐帧逼近目标，见 StartFogFade），揭示方向保持瞬时
+		if (!StartFogFade(pCell, newFoggedness))
+			pCell->Foggedness = newFoggedness;
 	}
 
 	if (pCell->Foggedness == -1)
@@ -801,7 +895,10 @@ DEFINE_HOOK(0x4A9CA0, DisplayClass_RevealFogShroud_Reimplement, 0x8)
 					{
 						if (adjNewFoggedness >= 0 && adjNewFoggedness != pAdjCell->Foggedness)
 						{
-							pAdjCell->Foggedness = adjNewFoggedness;
+							// 邻格的变浓扩散同样走渐变
+							if (!StartFogFade(pAdjCell, adjNewFoggedness))
+								pAdjCell->Foggedness = adjNewFoggedness;
+
 							TacticalClass::Instance->RegisterCellAsVisible(pAdjCell);
 						}
 

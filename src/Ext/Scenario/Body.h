@@ -49,6 +49,10 @@ public:
 
 		std::set<int> Smudges;
 
+		// 瞬态（不序列化）：正在做雾浓度渐变的格子（cell index），由
+		// LogicClass_AI 每帧推进，完成或被打断后移出。见 CellExt::FogFadeTarget。
+		std::vector<int> FadingFogCells;
+
 		std::vector<std::wstring> RecordMessages;
 
 		PhobosFixedString<64u> DefaultLS640BkgdName;
@@ -89,6 +93,7 @@ public:
 			, BaseNormalTechnos {}
 			, OwnedUniqueTechnos {}
 			, Smudges {}
+			, FadingFogCells {}
 			, RecordMessages {}
 			, DefaultLS640BkgdName {}
 			, DefaultLS800BkgdName {}
