@@ -19,6 +19,7 @@ std::vector<BuildingTypeExt::TechnoWithDestination> BuildingTypeExt::CleanFinalO
 std::vector<CellClass*> BuildingTypeExt::CleanDeleteCells;
 std::vector<TechnoClass*> BuildingTypeExt::CleanOptionalTechnos;
 std::unordered_map<int, int> BuildingTypeExt::PlaceCheckedCells;
+
 static bool InitStaticBuildingTypeContainers()
 {
 	BuildingTypeExt::BaseNormalCells.reserve(100);
@@ -44,8 +45,9 @@ static bool InitStaticBuildingTypeContainers()
 	BuildingTypeExt::PlaceCheckedCells.reserve(400);
 	BuildingTypeExt::PlaceCheckedCells.clear();
 
-    return true;
+	return true;
 }
+
 bool BuildingTypeExt::ContainersInit = InitStaticBuildingTypeContainers();
 BuildingTypeExt::ExtContainer::ExtContainer() : Container("BuildingTypeClass") { }
 BuildingTypeExt::ExtContainer::~ExtContainer() = default;
@@ -286,7 +288,7 @@ bool BuildingTypeExt::CleanUpBuildingSpace(BuildingTypeClass* pBuildingType, Cel
 
 	for (auto pFoundation = pBuildingType->GetFoundationData(false); *pFoundation != CellStruct { 0x7FFF, 0x7FFF }; ++pFoundation)
 	{
-		auto currentCell = topLeftCell + *pFoundation;
+		const auto currentCell = topLeftCell + *pFoundation;
 
 		if (const auto pCell = MapClass::Instance.TryGetCellAt(currentCell))
 		{
@@ -326,15 +328,12 @@ bool BuildingTypeExt::CleanUpBuildingSpace(BuildingTypeClass* pBuildingType, Cel
 
 	for (auto pFoundation = pBuildingType->FoundationOutside; *pFoundation != CellStruct { 0x7FFF, 0x7FFF }; ++pFoundation)
 	{
-		auto searchCell = topLeftCell + *pFoundation;
+		const auto searchCell = topLeftCell + *pFoundation;
 
 		if (const auto pSearchCell = MapClass::Instance.TryGetCellAt(searchCell))
 		{
-			if (!(pSearchCell->OccupationFlags & 0x80)
-				&& pSearchCell->IsClearToMove(SpeedType::Amphibious, true, true, -1, MovementZone::Amphibious, -1, false))
-			{
+			if (!(pSearchCell->OccupationFlags & 0x80) && pSearchCell->IsClearToMove(SpeedType::Amphibious, true, true, -1, MovementZone::Amphibious, -1, false))
 				BuildingTypeExt::CleanOptionalCells.push_back(pSearchCell);
-			}
 		}
 	}
 
@@ -342,8 +341,7 @@ bool BuildingTypeExt::CleanUpBuildingSpace(BuildingTypeClass* pBuildingType, Cel
 		return true;
 
 	// Step 3: Sort the technos by the distance out of the foundation.
-	std::sort(&BuildingTypeExt::CleanCheckedTechnos[0], &BuildingTypeExt::CleanCheckedTechnos[BuildingTypeExt::CleanCheckedTechnos.size()],
-		[](TechnoClass* pTechnoA, TechnoClass* pTechnoB)
+	std::sort(BuildingTypeExt::CleanCheckedTechnos.begin(), BuildingTypeExt::CleanCheckedTechnos.end(), [](TechnoClass* pTechnoA, TechnoClass* pTechnoB)
 	{
 		int minA = INT_MAX;
 		int minB = INT_MAX;
@@ -357,7 +355,7 @@ bool BuildingTypeExt::CleanUpBuildingSpace(BuildingTypeClass* pBuildingType, Cel
 			}
 			else
 			{
-				auto curA = static_cast<int>(pTechnoA->GetMapCoords().DistanceFromSquared(pOptionalCell->MapCoords));
+				const int curA = static_cast<int>(pTechnoA->GetMapCoords().DistanceFromSquared(pOptionalCell->MapCoords));
 
 				if (curA < minA)
 					minA = curA;
@@ -366,7 +364,7 @@ bool BuildingTypeExt::CleanUpBuildingSpace(BuildingTypeClass* pBuildingType, Cel
 					continue;
 			}
 
-			auto curB = static_cast<int>(pTechnoB->GetMapCoords().DistanceFromSquared(pOptionalCell->MapCoords));
+			const int curB = static_cast<int>(pTechnoB->GetMapCoords().DistanceFromSquared(pOptionalCell->MapCoords));
 
 			if (curB < minB)
 				minB = curB;
@@ -400,13 +398,15 @@ bool BuildingTypeExt::CleanUpBuildingSpace(BuildingTypeClass* pBuildingType, Cel
 			const auto location = pCheckedTechno->GetMapCoords();
 			const auto pCheckedType = pCheckedTechno->GetTechnoType();
 			const bool isInfantry = pCheckedTechno->WhatAmI() == AbstractType::Infantry;
+
 			auto tryGetInfantryDestinationCell = [&]() -> CellClass*
 			{
 				if (isInfantry) // Try to maximizing cells utilization
 				{
 					if (BuildingTypeExt::CleanInfantryCells.size() && infantryCount.Y >= (infantryCount.X / 3 + (infantryCount.X % 3 ? 1 : 0)))
 					{
-						std::sort(&BuildingTypeExt::CleanInfantryCells[0], &BuildingTypeExt::CleanInfantryCells[BuildingTypeExt::CleanInfantryCells.size()],[location](InfantryCountInCell cellA, InfantryCountInCell cellB){
+						std::sort(BuildingTypeExt::CleanInfantryCells.begin(), BuildingTypeExt::CleanInfantryCells.end(), [location](InfantryCountInCell cellA, InfantryCountInCell cellB)
+						{
 							return cellA.Position->MapCoords.DistanceFromSquared(location) < cellB.Position->MapCoords.DistanceFromSquared(location);
 						});
 
@@ -427,10 +427,12 @@ bool BuildingTypeExt::CleanUpBuildingSpace(BuildingTypeClass* pBuildingType, Cel
 
 			if (!pDestinationCell)
 			{
-				std::sort(&BuildingTypeExt::CleanOptionalCells[0], &BuildingTypeExt::CleanOptionalCells[BuildingTypeExt::CleanOptionalCells.size()],[location](CellClass* pCellA, CellClass* pCellB){
+				std::sort(BuildingTypeExt::CleanOptionalCells.begin(), BuildingTypeExt::CleanOptionalCells.end(), [location](CellClass* pCellA, CellClass* pCellB)
+				{
 					return pCellA->MapCoords.DistanceFromSquared(location) < pCellB->MapCoords.DistanceFromSquared(location);
 				});
 				const auto minDistanceSquaredFactor = BuildingTypeExt::CleanOptionalCells[0]->MapCoords.DistanceFromSquared(location);
+
 				BuildingTypeExt::CleanDeleteCells.clear();
 
 				for (const auto& pOptionalCell : BuildingTypeExt::CleanOptionalCells)
@@ -465,11 +467,13 @@ bool BuildingTypeExt::CleanUpBuildingSpace(BuildingTypeClass* pBuildingType, Cel
 						{
 							// Record the foots on the destination cell, they also need to be evacuated
 							for (const auto& pOptionalTechno : BuildingTypeExt::CleanOptionalTechnos)
+							{
 								BuildingTypeExt::CleanReCheckedTechnos.push_back(pOptionalTechno);
+							}
 
 							if (isInfantry) // Not need to remove it now
 							{
-								BuildingTypeExt::CleanInfantryCells.emplace_back(InfantryCountInCell{ pOptionalCell, 1 });
+								BuildingTypeExt::CleanInfantryCells.emplace_back(InfantryCountInCell { pOptionalCell, 1 });
 								++infantryCount.Y;
 							}
 
@@ -487,7 +491,7 @@ bool BuildingTypeExt::CleanUpBuildingSpace(BuildingTypeClass* pBuildingType, Cel
 						{
 							if (isInfantry) // Not need to remove it now
 							{
-								BuildingTypeExt::CleanInfantryCells.emplace_back(InfantryCountInCell{ pOptionalCell, 1 });
+								BuildingTypeExt::CleanInfantryCells.emplace_back(InfantryCountInCell { pOptionalCell, 1 });
 								++infantryCount.Y;
 							}
 
@@ -515,9 +519,11 @@ bool BuildingTypeExt::CleanUpBuildingSpace(BuildingTypeClass* pBuildingType, Cel
 			if (std::find(BuildingTypeExt::CleanCheckedCells.begin(), BuildingTypeExt::CleanCheckedCells.end(), pDestinationCell) == BuildingTypeExt::CleanCheckedCells.end())
 				BuildingTypeExt::CleanCheckedCells.push_back(pDestinationCell);
 
-			if (std::find(BuildingTypeExt::CleanOptionalCells.begin(), BuildingTypeExt::CleanOptionalCells.end(), pDestinationCell) != BuildingTypeExt::CleanOptionalCells.end())
+			const auto it = std::find(BuildingTypeExt::CleanOptionalCells.begin(), BuildingTypeExt::CleanOptionalCells.end(), pDestinationCell);
+
+			if (it != BuildingTypeExt::CleanOptionalCells.end())
 			{
-				BuildingTypeExt::CleanOptionalCells.erase(std::remove(BuildingTypeExt::CleanOptionalCells.begin(), BuildingTypeExt::CleanOptionalCells.end(), pDestinationCell), BuildingTypeExt::CleanOptionalCells.end());
+				BuildingTypeExt::CleanOptionalCells.erase(it);
 				auto searchCell = pDestinationCell->MapCoords - CellStruct { 1, 1 };
 
 				for (int i = 0; i < 4; ++i)
