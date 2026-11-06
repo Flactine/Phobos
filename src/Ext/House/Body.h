@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <HouseClass.h>
 
 class FactoryClass;
@@ -103,6 +103,10 @@ public:
 	struct SWExt
 	{
 		int ShotCount;
+		CDTimerClass MusicTimer;
+		bool MusicActive;
+
+		SWExt() : ShotCount(0), MusicTimer(), MusicActive(false) {}
 	};
 	std::vector<SWExt> SuperExts;
 
